@@ -1,0 +1,61 @@
+
+set N;
+/* nodes*/
+
+param r{x in N, y in N}, default 0;
+/* residual fund of p.c. (u,v) */ 
+
+
+param baseSendingFee{x in N, y in N};
+param baseReceivingFee{x in N, y in N};
+
+
+param sendingFeeNumRegions{x in N, y in N} integer >= 1;
+param sendingFeeRates{x in N, y in N, p in 1..sendingFeeNumRegions} >= if p = 1 then 0 else rate[x,y,p-1];
+param sendingFeeLimits {x in N, y in N, p in 1..sendingFeeNumRegions} > if p = 1 then 0 else sendingFeeLimits[x,y,p-1];
+
+
+param receivingFeeNumRegions{x in N, y in N} integer >= 1;
+param receivingFeeRates{x in N, y in N, p in 1..receivingFeeNumRegions} >= if p = 1 then 0 else rate[x,y,p-1];
+param receivingFeeLimits {x in N, y in N, p in 1..receivingFeeNumRegions} > if p = 1 then 0 else receivingFeeLimits[x,y,p-1];
+
+
+param source in N;
+/* source */
+
+param destination in N;
+/* destination */
+
+param P;
+/* payment to be made to destination */
+
+var flow{x in N, y in N} >= 0;
+/* variable expressing the amount paid by x to y */
+
+s.t. capcon{x in N, y in N}: flow[x,y] <= r[x,y];
+/* capacity constraint */
+
+
+s.t. flocon{z in N: z <> source and z <> destination}: sum{x in N} (flow[x,z] - <<{p in 1..receivingFeeNumRegions[x,z]-1} receivingFeeLimits[x,z,p]; {p in 1..receivingFeeNumRegions[x,z]} receivingFeeRates[i,j,p]>> flow[x,z]       ) = 
+					 sum{k in N} (flow[z,k] + <<{p in 1..sendingFeeNumRegions[z,k]-1} sendingFeeLimits[z,k,p]; {p in 1..sendingFeeNumRegions[z,k]} sendingFeeRates[z,k,p]>> flow[z,k]);
+/* flow conservation constraint */
+
+
+s.t. endToEnd: sum{x in N: x <> source} flow[source,x]  = P + sum{x in N, y in N}(  
+
+<<{p in 1..receivingFeeNumRegions[x,y]-1} receivingFeeLimits[x,y,p]; {p in 1..receivingFeeNumRegions[x,y]} receivingFeeRates[x,y,p]>> flow[x,y] ) +
+
+sum{x in N, y in N: x <> source} <<{p in 1..sendingFeeNumRegions[x,y]-1} sendingFeeLimits[x,y,p]; {p in 1..sendingFeeNumRegions[x,y]} sendingFeeRates[x,y,p]>> flow[x,y]; 
+
+
+s.t. endToEnd2: sum{x in N: x <> destination} flow[x, destination] = P;
+/* end-to-end flow constraints */
+
+
+minimize cost: sum{x in N} flow[source,x];
+/* minimizing the amount of fees */
+
+end;
+
+ 
+
