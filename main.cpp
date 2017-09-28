@@ -11,7 +11,7 @@
 
 #include <getopt.h>
 
-string modelsDirectory="/home/giovanni/lab/PaymentChannelsSimulator/glpk";
+string modelsDirectory="glpk";
 
 double findSmallestImbalance(std::vector<PaymentChannel *> channels){
 	double ret=abs(channels[0]->getResidualFundsA()-channels[0]->getResidualFundsB());
@@ -36,6 +36,9 @@ void checkPayment(std::vector<std::vector<double>> flows, double pay, double fee
 		out+=mytrunc(flows[src][i]);
 		in+=mytrunc(flows[i][dst]);
 	}
+
+	std::cout << "...";
+
 
 	if (fabs(out-in-fee)>MINIMUM_UNIT){
 		std::cerr<<"Approximation error (out-in-fee): " << fabs(out-in-fee) <<"\n";
@@ -205,7 +208,7 @@ int main(int argc, char * * argv){
 	double initFunds=net.totalFunds();
 
 
-	//do {
+	do {
 
 		net.checkResidualFunds();
 
@@ -322,6 +325,7 @@ int main(int argc, char * * argv){
 			PaymentDeployer pd(net.getNumNodes(), amount, src, dst);
 
 
+		}
 		}
 
 

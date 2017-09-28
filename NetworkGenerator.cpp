@@ -92,7 +92,8 @@ LightningNetwork NetworkGenerator::generate(int numNodes, double connProb,
 								slope_start = slope_start + slopes_distance_distribution(generator);
 								pc->addSlope(slope_start,dist(generator));
 							}
-							break;}
+							break;
+						}
 
 						}
 
