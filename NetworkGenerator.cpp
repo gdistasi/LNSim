@@ -49,21 +49,23 @@ LightningNetwork NetworkGenerator::generate(int numNodes, double connProb,
 				for (int j=i+1; j<numNodes; j++){
 					//if (i==j) continue;
 					double prob=dist(generator);
+
 					if (prob<connProb){
 
 						PaymentChannel * pc=0;
 
 						switch (feePolicy){
 
-						case FeeType::FIXED:
+						case FeeType::FIXED:{
 							double baseReceivingFee, baseSendingFee;
 							baseReceivingFee=receivingFee;
 							baseSendingFee=sendingFee;
 							pc = new PaymentChannelFixedFee(net.nodes[i], net.nodes[j], mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)));
 							((PaymentChannelFixedFee*)pc)->setBaseFees(baseSendingFee,baseReceivingFee);
 							break;
+						}
 
-						case FeeType::PROPORTIONAL:
+						case FeeType::PROPORTIONAL:{
 							double propSendingFee, propReceivingFee;
 							propReceivingFee=receivingFee;
 							propSendingFee=sendingFee;
@@ -74,13 +76,15 @@ LightningNetwork NetworkGenerator::generate(int numNodes, double connProb,
 							((PaymentChannelProportionalFee*)pc)->setProportionalFees(propSendingFee, propReceivingFee);
 							//std::cout << "FUNDS " << fundsA << " " << fundsB << "\n";
 							break;
+						}
 
-						case FeeType::BILANCING:
+						case FeeType::BILANCING:{
 							PaymentChannelBalancingFee * pc = new PaymentChannelBalancingFee(net.nodes[i], net.nodes[j], mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)));
 							((PaymentChannelBalancingFee*)pc)->setFeeSlopes(positiveSlope, negativeSlope);
-		    			break;
+							break;
+						}
 
-						case FeeType::GENERAL:
+						case FeeType::GENERAL:{
 							PaymentChannelGeneralFees * pc = new PaymentChannelGeneralFees(net.nodes[i], net.nodes[j], mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)), mytrunc(dist(generator)));
 							int numSlopes = num_slopes_distribution(generator);
 							int slope_start=0;
@@ -88,8 +92,8 @@ LightningNetwork NetworkGenerator::generate(int numNodes, double connProb,
 								slope_start = slope_start + slopes_distance_distribution(generator);
 								pc->addSlope(slope_start,dist(generator));
 							}
+							break;}
 
-							break;
 						}
 
 						net.channels.push_back(pc);

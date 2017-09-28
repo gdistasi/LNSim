@@ -205,7 +205,7 @@ int main(int argc, char * * argv){
 	double initFunds=net.totalFunds();
 
 
-	do {
+	//do {
 
 		net.checkResidualFunds();
 

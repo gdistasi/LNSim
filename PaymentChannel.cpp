@@ -25,7 +25,7 @@ PaymentChannel::~PaymentChannel() {
 }
 
 void PaymentChannel::PayA(double Payment) {
-	long int units=Payment/MINIMUM_UNIT;b
+	long int units=Payment/MINIMUM_UNIT;
 
 	double P=((double)units)*MINIMUM_UNIT;
 

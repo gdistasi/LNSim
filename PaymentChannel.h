@@ -9,11 +9,15 @@
 #define PAYMENTCHANNEL_H_
 
 
+#include <vector>
+
+
 #include "PaymentChannelEndPoint.h"
 
 #include <assert.h>
 
 enum FeeType : int { FIXED, PROPORTIONAL, BILANCING, GENERAL };
+
 
 
 class PaymentChannel {
@@ -62,7 +66,12 @@ class PaymentChannelFixedFee: public PaymentChannel {
 
 public:
 	PaymentChannelFixedFee(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, double resFundsA, double resFundsB):
-		PaymentChannel(A,B,resFundsA,resFundsB){}
+		PaymentChannel(A,B,resFundsA,resFundsB){
+
+		baseSendingFee=0; baseReceivingFee=0;
+
+
+	}
 
 
 	void setBaseFees(double sf, double rf){
@@ -90,6 +99,8 @@ protected:
 class PaymentChannelGeneralFees: public PaymentChannel {
 
 public:
+
+
 	PaymentChannelGeneralFees(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, double resFundsA, double resFundsB, double baseFee):
 		PaymentChannel(A,B,resFundsA,resFundsB){this->base=baseFee;}
 
@@ -108,17 +119,15 @@ public:
 
 	virtual void calcLinearizedFee(double paym_amount, double & sending, double & receiving, bool reverse=false) const {  }
 
-	void addSlope(int start, double coeff);
-
 protected:
 	double base;
-	std::vector<int> & starting_points;
-	std::vector<double> & coefficients;
+	std::vector<int>  starting_points;
+	std::vector<double>  coefficients;
 };
 
 
 class PaymentChannelProportionalFee: public PaymentChannel {
-l
+
 public:
 	PaymentChannelProportionalFee(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, double resFundsA, double resFundsB):
 		PaymentChannel(A,B,resFundsA,resFundsB){}
