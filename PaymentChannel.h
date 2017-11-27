@@ -16,7 +16,7 @@
 
 #include <assert.h>
 
-enum FeeType : int { FIXED, PROPORTIONAL, BILANCING, GENERAL };
+enum FeeType : int { FIXED, PROPORTIONAL, BILANCING, GENERIC };
 
 
 
