@@ -91,6 +91,10 @@ int main(int argc, char * * argv){
 	double positiveSlope=sendingFee;
 	double negativeSlope=sendingFee*0.01;
 	int averageNumSlopes=3;
+    
+    ResolutionMethod resMethod;
+    FeeType feePolicy;
+    PaymentMethod payMethod;
 
 	//handling of options
 	while (1)
@@ -108,6 +112,7 @@ int main(int argc, char * * argv){
 	          {"minFundsChannels",    required_argument, 0, 'm'},
 			  {"maxFundsChannels",    required_argument, 0, 'M'},
 			  {"modelsDirectory",   required_argument, 0, 'd'},
+              {"feePolicy", required_argument, 0, 'f'},
 			  {"seed",   required_argument, 0, 'S'},
 
 	          {0, 0, 0, 0}
@@ -179,6 +184,27 @@ int main(int argc, char * * argv){
 	        case 'w':
 	        	numDestinations=atoi(optarg);
 	        	break;
+                
+            case 'f':
+                if (strcmp("BASE", optarg)==0){
+                    feePolicy = FeeType::BASE;
+                } else if (strcmp("GENERAL", optarg)==0){
+                    feePolicy = FeeType::GENERAL;
+                } else {
+                  abort("Fee type not supported");   
+                }	        
+                break;    
+                
+            case 'r':
+                if (strcmp("EXACT", optarg)==0){
+                    resMethod=ResMethod::EXACT;
+                } else if (strcmp("HEURISTIC", optarg)==0){
+                    resMethod=ResMethod::EXACT;
+                } else {
+                  abort("Resolution method not supported");   
+                }
+                break;
+                
 	        case '?':
 	          /* getopt_long already printed an error message. */
 	        	exit(1);
@@ -193,8 +219,7 @@ int main(int argc, char * * argv){
 
 	Stats stats;
 
-	FeeType feeType=PROPORTIONAL;
-
+    
 	LightningNetwork net = NetworkGenerator::generate(numNodes, connectionProbability, minFund, maxFund, sendingFee,
 													receivingFee, positiveSlope, negativeSlope, feeType, seed, averageNumSlopes);
 
@@ -220,13 +245,61 @@ int main(int argc, char * * argv){
 
 		double totalFee=0;
 
-		switch(net.getFeePolicy()){
+		
+        PaymentDeployer * pd;
+        
+        if (    resMethod=ResolutionMethod::EXACT && 
+                ( payMethod==PaymentMethod::SINGLEPATH || payMethod == PaymentMethod::MULTIPATH )) {
+            
+            
+            std::vector<std::vector<double>> flows(net.getNumNodes(), vector<double>(net.getNumNodes()));
+			double fee=0;
+            
+            pd = new PaymentDeployerExact(net.getNumNodes(), amount, src, dst);
 
-		case FeeType::FIXED:
-			//NON FATTIBILE PER IL MOM
-			break;
+			for (const PaymentChannel * ch: net.getChannels()){
 
-		case FeeType::BILANCING:
+                /* add directional channel in one direction ... */
+                pd->AddPaymentChannel(ch->getEndPointA()->getId(), ch->getEndPointB()->getId(), 
+                            ch->getResidualFundsA(),	ch->getResidualFundsB(), 
+                            dynamic_cast<PaymentChannelGeneralFees*> ch->getPointsA(), dynamic_cast<PaymentChannelGeneralFees*> ch->getSlopesA());
+                
+                /* ... and the other */
+                pd->AddPaymentChannel(ch->getEndPointB()->getId(), ch->getEndPointA()->getId(), 
+                            ch->getResidualFundsB(),ch->getResidualFundsA(), 
+                            dynamic_cast<PaymentChannelGeneralFees*> ch->getPointsB(), dynamic_cast<PaymentChannelGeneralFees*> ch->getSlopesB());
+            }
+        
+                    
+        }
+        
+        pd->setAmount(imb);
+
+        std::vector<std::vector<double>> flows(net.getNumNodes(), vector<double>(net.getNumNodes()));
+		double fee=0;
+
+		if (pd->RunSolver(flows,fee)==0){
+					std::cout << "Success!\n";
+					totalFee+=fee;
+					net.makePayments(flows);
+					stats.feesPaid+=totalFee;
+					transferredAmount+=imb;
+        } else {
+					std::cerr<<"Unsuccess!\n";
+					stats.unsuccess+=1;
+                    break;
+        }
+
+        if (transferredAmount == amount)
+			stats.success+=1;
+        else
+            stats.unsuccess+=1;
+            
+            
+            
+            
+/*
+		case ResolutionMethod::HEURISTIC:
 		{
 			double transferredAmount=0;
 
@@ -327,6 +400,7 @@ int main(int argc, char * * argv){
 
 		}
 		}
+*/ 
 
 
 

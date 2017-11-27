@@ -86,12 +86,22 @@ LightningNetwork NetworkGenerator::generate(int numNodes, double connProb,
 
 						case FeeType::GENERAL:{
 							PaymentChannelGeneralFees * pc = new PaymentChannelGeneralFees(net.nodes[i], net.nodes[j], mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)), mytrunc(dist(generator)));
-							int numSlopes = num_slopes_distribution(generator);
-							int slope_start=0;
-							for (int i=0; i<numSlopes; i++){
-								slope_start = slope_start + slopes_distance_distribution(generator);
-								pc->addSlope(slope_start,dist(generator));
+							
+                            int numSlopesA = num_slopes_distribution(generator);
+                            int numSlopesB = num_slopes_distribution(generator);
+                            
+							int slope_startA=0;
+                            int slope_startB=0;
+                            
+							for (int i=0; i<numSlopesA; i++){
+								slope_startA = slope_startA + slopes_distance_distribution(generator);
+								pc->addSlopeA(slope_start,dist(generator));
 							}
+							for (int i=0; i<numSlopesB; i++){
+								slope_startB = slope_startB + slopes_distance_distribution(generator);
+								pc->addSlopeB(slope_startB,dist(generator));
+							}
+							
 							break;
 						}
 

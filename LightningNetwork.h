@@ -58,8 +58,6 @@ protected:
 
 	enum FeeType feePolicy;
 
-
-
 };
 
 #endif /* LIGHTNINGNETWORK_H_ */

@@ -5,17 +5,17 @@
  *      Author: giovanni
  */
 
-#ifndef GLPK_PAYMENTDEPLOYER_H_
-#define GLPK_PAYMENTDEPLOYER_H_
+#ifndef GLPK_PAYMENTDEPLOYEREX_H_
+#define GLPK_PAYMENTDEPLOYEREX_H_
 
 #include <map>
 #include <stdio.h>
 #include <vector>
 
-class PaymentDeployer {
+class PaymentDeployerExact: public PaymentDeployer {
 public:
 	PaymentDeployerExact(int numN, double P, int sourcet, int destinationt):
-		numNodes(numN),payment(P),source(sourcet),destination(destinationt){};
+		PaymentDeployer(numN,P,sourcet,destinationt){};
 
 	void AddPaymentChannel(int A, int B, double resFundsA, double resFundsB, std::vector<long> & sp, std::vector<double> & cfs);
 	virtual ~PaymentDeployerExact();
@@ -24,11 +24,6 @@ public:
 	int  RunSolverOld(std::vector<std::vector<double>> & flow, double & totalFee);
 
 protected:
-	double resFunds(int A,int B);
-	double sendingFee(int x,int y);
-	double receivingFee(int x,int y);
-
-
 
 	class PaymentChannel {
 

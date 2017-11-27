@@ -27,7 +27,7 @@ extern string modelsDirectory;
 
 std::string exec(const char* cmd);
 
-void PaymentDeployer::A	void AddPaymentChannel(int A, int B, double resFundsA, double resFundsB, std::vector<long> & sp, std::vector<double> & cfs){
+void PaymentDeployer::A	void AddPaymentChannel(int A, int B, double resFundsA, double resFundsB, double base, std::vector<long> & spA, std::vector<double> & cfs){
 	//channels.insert[pair<int,int>(A,B)]=PaymentChannel(A,B,resFundsA,resFundsB, feeA, feeB);
 
 	channels.insert(std::map<std::pair<int,int>,PaymentChannel>::value_type(pair<int,int>(A,B),
@@ -40,8 +40,7 @@ PaymentDeployer::~PaymentDeployer() {
 }
 
 double PaymentDeployer::resFunds(int x,int y){
-	/* we suppose the payment channels are added following the node id order - HACK */
-		return channels.find(pair<int,int>(x,y))->second.resFundsA;
+	return channels.find(pair<int,int>(x,y))->second.resFundsA;
 }
 
 
@@ -111,7 +110,7 @@ int  PaymentDeployer::RunSolverOld(std::vector<std::vector<double>> & flow, doub
 		fprintf(fpDat, ";\n\n");
 
 
-		// residual funds constraints
+		/* residual funds constraints
 			fprintf(fpDat, "param receivingFee:\n");
 			for (i = 0; i < nodeNum; i++) {
 				fprintf(fpDat, "%d ", i);
@@ -127,7 +126,7 @@ int  PaymentDeployer::RunSolverOld(std::vector<std::vector<double>> & flow, doub
 				fprintf(fpDat, "\n");
 			}
 			fprintf(fpDat, ";\n\n");
-
+        */
 
 
 		fprintf(fpDat, "param source := %d;\n\n", source);
@@ -318,7 +317,7 @@ int  PaymentDeployer::RunSolver(std::vector<std::vector<double>> & flow, double 
 		fprintf(fpDat, ";\n\n");
 
 
-		// residual funds constraints
+	/*	// residual funds constraints
 			fprintf(fpDat, "param receivingFee:\n");
 			for (i = 0; i < nodeNum; i++) {
 				fprintf(fpDat, "%d ", i);
@@ -335,7 +334,7 @@ int  PaymentDeployer::RunSolver(std::vector<std::vector<double>> & flow, double 
 			}
 			fprintf(fpDat, ";\n\n");
 
-
+*/
 
 		fprintf(fpDat, "param source := %d;\n\n", source);
 		fprintf(fpDat, "param destination := %d;\n\n", destination);
@@ -347,7 +346,7 @@ int  PaymentDeployer::RunSolver(std::vector<std::vector<double>> & flow, double 
 
 
 		sprintf(commandString, "glpsol --model %s --data %s -w %s",
-						(modelsDirectory+"/Model").c_str(), dataFile, outputFile);
+						(modelsDirectory+"/ModelExact").c_str(), dataFile, outputFile);
 		cout << commandString << endl;
 	//	::system(commandString);
 

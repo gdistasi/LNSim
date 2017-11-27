@@ -6,8 +6,8 @@ param r{x in N, y in N}, default 0;
 /* residual fund of p.c. (u,v) */ 
 
 
-/* described if a link if used or not for a payment */
-var x{x in N, y in N} binary;
+/* describes if a link is used or not for a payment */
+var xi{x in N, y in N} binary;
 
 param baseSendingFee{x in N, y in N};
 
@@ -38,15 +38,13 @@ s.t. capcon{x in N, y in N}: flow[x,y] <= r[x,y];
 
 
 s.t. flocon{z in N: z <> source and z <> destination}: sum{x in N} (flow[x,z]) = 
-					 sum{k in N} (flow[z,k] + <<{p in 1..sendingFeeNumRegions[z,k]-1} sendingFeeLimits[z,k,p]; {p in 1..sendingFeeNumRegions[z,k]} sendingFeeRates[z,k,p]>> flow[z,k] + x[z,k]* baseSendingFee[z,k]);
+					 sum{k in N} (flow[z,k] + <<{p in 1..sendingFeeNumRegions[z,k]-1} sendingFeeLimits[z,k,p]; {p in 1..sendingFeeNumRegions[z,k]} sendingFeeRates[z,k,p]>> flow[z,k] + xi[z,k] * baseSendingFee[z,k]);
 /* flow conservation constraint */
 
 
 s.t. endToEnd: sum{x in N: x <> source} flow[source,x]  = P + sum{x in N, y in N}(  
 
-<<{p in 1..receivingFeeNumRegions[x,y]-1} receivingFeeLimits[x,y,p]; {p in 1..receivingFeeNumRegions[x,y]} receivingFeeRates[x,y,p]>> flow[x,y] ) +
-
-sum{x in N, y in N: x <> source} <<{p in 1..sendingFeeNumRegions[x,y]-1} sendingFeeLimits[x,y,p]; {p in 1..sendingFeeNumRegions[x,y]} sendingFeeRates[x,y,p]>> flow[x,y]; 
+sum{z in N, y in N: z <> source} <<{p in 1..sendingFeeNumRegions[z,y]-1} sendingFeeLimits[z,y,p]; {p in 1..sendingFeeNumRegions[z,y]} sendingFeeRates[z,y,p]>> flow[z,y] + xi[z,y] * baseSendingFee[z,y] ; 
 
 
 s.t. endToEnd2: sum{x in N: x <> destination} flow[x, destination] = P;

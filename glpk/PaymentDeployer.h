@@ -13,9 +13,34 @@
 #include <vector>
 
 class PaymentDeployer {
+    
+    
 public:
 	PaymentDeployer(int numN, double P, int sourcet, int destinationt):
 		numNodes(numN),payment(P),source(sourcet),destination(destinationt){};
+
+    void setAmount(double am){ payment=am; }
+    
+    virtual int  RunSolver(std::vector<std::vector<double>> & flow, double & totalFee)=0;
+	virtual int  RunSolverOld(std::vector<std::vector<double>> & flow, double & totalFee){};
+    
+protected:
+    
+    int numNodes;
+	double payment;
+	int source;
+	int destination;
+
+
+	enum solverErrors : int  {COULD_NOT_OPEN_DATA_FILE, COULD_NOT_OPEN_OUTPUT_FILE, PAYMENT_FAILED};
+    
+    
+}
+
+class PaymentDeployerProportional: public PaymentDeployer {
+public:
+	PaymentDeployerProportional(int numN, double P, int sourcet, int destinationt):
+		PaymentDeployer(numN,P,sourcet,destinationt){};
 
 	void AddPaymentChannel(int A, int B, double resFundsA, double resFundsB, double sfeeA, double sfeeB, double, double);
 	virtual ~PaymentDeployer();
@@ -48,14 +73,9 @@ protected:
 			};
 
 
-	int numNodes;
-	double payment;
-	int source;
-	int destination;
+	
+    std::map<std::pair<int,int>, PaymentChannel> channels;
 
-	std::map<std::pair<int,int>, PaymentChannel> channels;
-
-	enum solverErrors : int  {COULD_NOT_OPEN_DATA_FILE, COULD_NOT_OPEN_OUTPUT_FILE, PAYMENT_FAILED};
 
 };
 

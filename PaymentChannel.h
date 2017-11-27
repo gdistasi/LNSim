@@ -16,10 +16,10 @@
 
 #include <assert.h>
 
-enum FeeType : int { FIXED, PROPORTIONAL, BILANCING, GENERAL };
+#include "defs.h"
 
 
-
+/*These are directional channels. A LN channel becomes two of these */  
 class PaymentChannel {
 public:
 	PaymentChannel(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, double resFundsA, double resFundsB);
@@ -101,28 +101,43 @@ class PaymentChannelGeneralFees: public PaymentChannel {
 public:
 
 
-	PaymentChannelGeneralFees(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, double resFundsA, double resFundsB, double baseFee):
-		PaymentChannel(A,B,resFundsA,resFundsB){this->base=baseFee;}
+	PaymentChannelGeneralFees(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, double resFundsA, double resFundsB, double baseFeeA, double baseFeeB):
+		PaymentChannel(A,B,resFundsA,resFundsB){ this->baseA=baseFeeA; this->baseB=baseFeeB }
 
 
-	void setSlopes(double base, std::vector<int> & starting_points, std::vector<double> & coefficients){
-		this->starting_points=starting_points;
-		this->coefficients=coefficients;
-		this->base=base;
+	void setSlopesA(double baseA, std::vector<long> & starting_points, std::vector<double> & coefficients){
+		this->starting_pointsA=starting_points;
+		this->coefficientsA=coefficients;
+		this->baseA=baseA;
 	}
 
 	virtual bool doesFeeDependOnAmount(){
 			return true;
 	}
 	
-	void addSlope(int start, double coeff);
+	/* Points where the slope changes */
+	std::vector<long> getPointsA(){
+            return pointsA;
+    }
+    
+    std::vector<double> getSlopesA(){
+            return coefficientsA;
+    }
+	
+	void addSlopeA(int start, double coeff);
+   	void addSlopeB(int start, double coeff);
+
 
 	virtual void calcLinearizedFee(double paym_amount, double & sending, double & receiving, bool reverse=false) const {  }
 
 protected:
-	double base;
-	std::vector<int>  starting_points;
-	std::vector<double>  coefficients;
+	double baseA,baseB;
+	std::vector<long>  starting_pointsA;
+	std::vector<double>  coefficientsA;
+    std::vector<long>  starting_pointsB;
+	std::vector<double>  coefficientsB;
+    
+    
 };
 
 

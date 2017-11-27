@@ -31,7 +31,7 @@ void PaymentChannel::PayA(double Payment) {
 
 	std::cout << "Res B" << residualFundsB << " Payment " << P << "\n";
 
-	assert(residualFundsB-P>-MINIMUM_UNIT );
+	assert( residualFundsB-P>-MINIMUM_UNIT );
 	this->residualFundsB-=P;
 
 	std::cout << std::setprecision(15) << "paying " << P << "\n";
