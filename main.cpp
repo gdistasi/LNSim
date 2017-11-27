@@ -323,7 +323,7 @@ int main(int argc, char * * argv){
 
 
 					pd.AddPaymentChannel(ch->getEndPointA()->getId(), ch->getEndPointB()->getId(), ch->getResidualFundsA(),
-							ch->getResidualFundsB(), sendingFeeA, sendingFeeB, receivingFeeA, receivingFeeB);
+					ch->getResidualFundsB(), sendingFeeA, sendingFeeB, receivingFeeA, receivingFeeB);
 				}
 
 				double imb=findSmallestImbalance(net.getChannels());
@@ -394,11 +394,11 @@ int main(int argc, char * * argv){
 		}
 
 
-		case FeeType::GENERAL:{
-			PaymentDeployer pd(net.getNumNodes(), amount, src, dst);
+		case FeeType::GENERIC:{
+				PaymentDeployer pd(net.getNumNodes(), amount, src, dst);
+				break;
 
-
-		}
+			}
 		}
 */ 
 

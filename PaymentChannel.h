@@ -19,6 +19,7 @@
 #include "defs.h"
 
 
+
 /*These are directional channels. A LN channel becomes two of these */  
 class PaymentChannel {
 public:
