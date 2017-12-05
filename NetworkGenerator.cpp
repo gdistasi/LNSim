@@ -20,16 +20,16 @@ NetworkGenerator::~NetworkGenerator() {
 	// TODO Auto-generated destructor stub
 }
 
-LightningNetwork NetworkGenerator::generate(int numNodes, double connProb,
+LightningNetwork * NetworkGenerator::generate(int numNodes, double connProb,
 		double minFund, double maxFund, double sendingFee, double receivingFee, double positiveSlope, double negativeSlope, FeeType feePolicy, int seed, int averageNumSlopes) {
 
 
 
-			LightningNetwork net;
+			LightningNetwork * net= new LightningNetwork();
 
 			for (int i=0; i<numNodes; i++){
 					PaymentChannelEndPoint * n=new PaymentChannelEndPoint();
-					net.nodes.push_back(n);
+					net->nodes.push_back(n);
 					n->setId(i);
 			}
 
@@ -43,7 +43,7 @@ LightningNetwork NetworkGenerator::generate(int numNodes, double connProb,
 
 
 
-			net.feePolicy=feePolicy;
+			net->feePolicy=feePolicy;
 
 			for (int i=0; i<numNodes; i++)
 				for (int j=i+1; j<numNodes; j++){
@@ -60,7 +60,7 @@ LightningNetwork NetworkGenerator::generate(int numNodes, double connProb,
 							double baseReceivingFee, baseSendingFee;
 							baseReceivingFee=receivingFee;
 							baseSendingFee=sendingFee;
-							pc = new PaymentChannelFixedFee(net.nodes[i], net.nodes[j], mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)));
+							pc = new PaymentChannelFixedFee(net->nodes[i], net->nodes[j], mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)));
 							((PaymentChannelFixedFee*)pc)->setBaseFees(baseSendingFee,baseReceivingFee);
 							break;
 						}
@@ -85,8 +85,11 @@ LightningNetwork NetworkGenerator::generate(int numNodes, double connProb,
 						}
 
 						case FeeType::GENERAL:{
-							PaymentChannelGeneralFees * pc = new PaymentChannelGeneralFees(net.nodes[i], net.nodes[j], mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)), mytrunc(dist(generator)));
+							PaymentChannelGeneralFees * pc = new PaymentChannelGeneralFees(net.nodes[i], net.nodes[j], mytrunc(dist_funds(generator)),  mytrunc(dist_funds(generator)) );
 							
+							pc->setBaseFeeA(10);
+							pc->setBaseFeeB(10);
+
                             int numSlopesA = num_slopes_distribution(generator);
                             int numSlopesB = num_slopes_distribution(generator);
                             
@@ -95,7 +98,7 @@ LightningNetwork NetworkGenerator::generate(int numNodes, double connProb,
                             
 							for (int i=0; i<numSlopesA; i++){
 								slope_startA = slope_startA + slopes_distance_distribution(generator);
-								pc->addSlopeA(slope_start,dist(generator));
+								pc->addSlopeA(slope_startA,dist(generator));
 							}
 							for (int i=0; i<numSlopesB; i++){
 								slope_startB = slope_startB + slopes_distance_distribution(generator);
@@ -107,8 +110,8 @@ LightningNetwork NetworkGenerator::generate(int numNodes, double connProb,
 
 						}
 
-						net.channels.push_back(pc);
-						net.mapCh.insert(std::map<std::pair<PaymentChannelEndPoint *,PaymentChannelEndPoint *>,PaymentChannel *>::value_type(
+						net->channels.push_back(pc);
+						net->mapCh.insert(std::map<std::pair<PaymentChannelEndPoint *,PaymentChannelEndPoint *>,PaymentChannel *>::value_type(
 								std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(net.nodes[i],net.nodes[j]),pc));
 					}
 				}

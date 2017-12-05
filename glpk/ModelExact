@@ -5,7 +5,6 @@ set N;
 param r{x in N, y in N}, default 0;
 /* residual fund of p.c. (u,v) */ 
 
-
 /* describes if a link is used or not for a payment */
 var xi{x in N, y in N} binary;
 
@@ -30,12 +29,10 @@ param P;
 var flow{x in N, y in N} >= 0;
 /* variable expressing the amount paid by x to y */
 
-s.t. binary{x in N, y in N}: x[i,j] >= flow[x,y] 
+s.t. binary{x in N, y in N}: xi[x,y] >= flow[x,y] 
 
 s.t. capcon{x in N, y in N}: flow[x,y] <= r[x,y];
 /* capacity constraint */
-
-
 
 s.t. flocon{z in N: z <> source and z <> destination}: sum{x in N} (flow[x,z]) = 
 					 sum{k in N} (flow[z,k] + <<{p in 1..sendingFeeNumRegions[z,k]-1} sendingFeeLimits[z,k,p]; {p in 1..sendingFeeNumRegions[z,k]} sendingFeeRates[z,k,p]>> flow[z,k] + xi[z,k] * baseSendingFee[z,k]);
@@ -52,7 +49,7 @@ s.t. endToEnd2: sum{x in N: x <> destination} flow[x, destination] = P;
 
 
 minimize cost: sum{x in N} flow[source,x];
-/* minimizing the amount of fees */
+/* minimizing the amount to be paid by the sender */
 
 end;
 

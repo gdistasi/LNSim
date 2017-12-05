@@ -11,49 +11,42 @@
 #include <map>
 #include <stdio.h>
 #include <vector>
+#include <string.h>
+
+#include "PaymentDeployer.h"
+
+using namespace std;
 
 class PaymentDeployerExact: public PaymentDeployer {
-public:
-	PaymentDeployerExact(int numN, double P, int sourcet, int destinationt):
-		PaymentDeployer(numN,P,sourcet,destinationt){};
 
-	void AddPaymentChannel(int A, int B, double resFundsA, double resFundsB, std::vector<long> & sp, std::vector<double> & cfs);
-	virtual ~PaymentDeployerExact();
-	void setAmount(double am){ payment=am; }
+public:
+
+	PaymentDeployerExact(int numN, double P, int sourcet, int destinationt):PaymentDeployer(numN,P,sourcet,destinationt){};
+
+	void AddPaymentChannel(int A, int B, long resFundsA, long resFundsB, std::vector<long> sp, std::vector<double> cfs);
+
 	int  RunSolver(std::vector<std::vector<double>> & flow, double & totalFee);
-	int  RunSolverOld(std::vector<std::vector<double>> & flow, double & totalFee);
+
+	std::vector<double> getCoefficients(int x, int y){ return fees[pair<int,int>(x,y)].coefficients; }
+	std::vector<long> getPoints(int x, int y){ return fees[pair<int,int>(x,y)].starting_points; }
+
+	virtual ~PaymentDeployerExact(){}
+
+	class PiecewiseLinearFee {
+
+	public:
+
+		public:
+			std::vector<long> starting_points;
+			std::vector<double> coefficients;
+
+	};
 
 protected:
 
-	class PaymentChannel {
-
-		public:
-			PaymentChannel(int At, int Bt, long rfA, long rfB, std::vector<long> & sp, std::vector<double> & cfs):
-				A(At),B(Bt),starting_points(sp),coefficients(cfs),resFundsA(rfA),resFundsB(rfB){}
-
-//			std::vector<int> & starting_points;
-//			std::vector<double> & coefficients;
-
-				int A,B;
-				long resFundsA, resFundsB;
-				std::vector<long> starting_points;
-				std::vector<double> coefficients;
-
-			};
-
-
-	int numNodes;
-	double payment;
-	int source;
-	int destination;
-
-	std::map<std::pair<int,int>, PaymentChannel> channels;
-
-	enum solverErrors : int  {COULD_NOT_OPEN_DATA_FILE, COULD_NOT_OPEN_OUTPUT_FILE, PAYMENT_FAILED};
+	std::map<std::pair<int,int>, PiecewiseLinearFee> fees;
 
 };
-
-#define EPSILON             1E-15
 
 
 #endif /* GLPK_PAYMENTDEPLOYER_H_ */

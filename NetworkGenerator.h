@@ -15,7 +15,7 @@ public:
 	NetworkGenerator();
 	virtual ~NetworkGenerator();
 
-	static LightningNetwork generate(int numNodes, double connDegree, double minFund, double maxFund,
+	static LightningNetwork * generate(int numNodes, double connDegree, double minFund, double maxFund,
 							double sendingFee, double receivingFee, double positiveSlope, double negativeSlope, FeeType policy, int seed, int averageNumSlopes);
 
 

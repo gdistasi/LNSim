@@ -23,7 +23,7 @@
 /*These are directional channels. A LN channel becomes two of these */  
 class PaymentChannel {
 public:
-	PaymentChannel(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, double resFundsA, double resFundsB);
+	PaymentChannel(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, ln_units resFundsA, ln_units resFundsB);
 
 	virtual ~PaymentChannel();
 
@@ -31,7 +31,7 @@ public:
 		return residualFundsA;
 	}
 
-	void setResidualFundsA(double residualFundsA) {
+	void setResidualFundsA(ln_units residualFundsA) {
 		this->residualFundsA = residualFundsA;
 	}
 
@@ -39,7 +39,7 @@ public:
 		return residualFundsB;
 	}
 
-	void setResidualFundsB(double residualFundsB) {
+	void setResidualFundsB(ln_units residualFundsB) {
 		this->residualFundsB = residualFundsB;
 	}
 
@@ -56,7 +56,7 @@ public:
 	virtual void calcLinearizedFee(double paym_amount, double & sending, double  & receiving, bool reverse=false) const =0;
 
 protected:
-	double residualFundsA,residualFundsB;
+	ln_units residualFundsA,residualFundsB;
 	PaymentChannelEndPoint * A,*B;
 
 };
@@ -102,43 +102,74 @@ class PaymentChannelGeneralFees: public PaymentChannel {
 public:
 
 
-	PaymentChannelGeneralFees(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, double resFundsA, double resFundsB, double baseFeeA, double baseFeeB):
-		PaymentChannel(A,B,resFundsA,resFundsB){ this->baseA=baseFeeA; this->baseB=baseFeeB }
+	PaymentChannelGeneralFees(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, double resFundsA, double resFundsB):
+		PaymentChannel(A,B,resFundsA,resFundsB){  }
 
 
-	void setSlopesA(double baseA, std::vector<long> & starting_points, std::vector<double> & coefficients){
+	void setFeeFunctionA(double baseA, const std::vector<long> & starting_points, const std::vector<double> & coefficients){
 		this->starting_pointsA=starting_points;
 		this->coefficientsA=coefficients;
-		this->baseA=baseA;
+		this->baseFeeA=baseA;
+	}
+
+	void setFeeFunctionB(double baseA, const std::vector<long> & starting_points, const std::vector<double> & coefficients){
+		this->starting_pointsB=starting_points;
+		this->coefficientsB=coefficients;
+		this->baseFeeB=baseA;
 	}
 
 	virtual bool doesFeeDependOnAmount(){
 			return true;
 	}
 	
+	virtual void calcLinearizedFee(double paym_amount, double & sending, double & receiving, bool reverse=false) const {
+	}
+
+	double getBaseFeeA(){ return baseFeeA; }
+
+
+	double getBaseFeeB(){ return baseFeeB; }
+
+
 	/* Points where the slope changes */
 	std::vector<long> getPointsA(){
-            return pointsA;
+            return starting_pointsA;
     }
     
     std::vector<double> getSlopesA(){
             return coefficientsA;
     }
+
+
+	/* Points where the slope changes */
+	std::vector<long> getPointsB(){
+            return starting_pointsB;
+    }
+
+    std::vector<double> getSlopesB(){
+            return coefficientsB;
+    }
 	
-	void addSlopeA(int start, double coeff);
-   	void addSlopeB(int start, double coeff);
+    void setBaseFeeA(double base) {baseFeeA=base;}
+    void setBaseFeeB(double base) {baseFeeB=base;}
 
 
-	virtual void calcLinearizedFee(double paym_amount, double & sending, double & receiving, bool reverse=false) const {  }
+	void addSlopeA(long start, double coeff);
+   	void addSlopeB(long start, double coeff);
+
+
+	//virtual void calcLinearizedFee(double paym_amount, double & sending, double & receiving, bool reverse=false) const {  }
 
 protected:
-	double baseA,baseB;
+	double baseFeeA;
 	std::vector<long>  starting_pointsA;
 	std::vector<double>  coefficientsA;
+
+	double baseFeeB;
     std::vector<long>  starting_pointsB;
 	std::vector<double>  coefficientsB;
     
-    
+
 };
 
 

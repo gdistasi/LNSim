@@ -12,74 +12,59 @@
 #include <stdio.h>
 #include <vector>
 
+
+extern std::string modelsDirectory;
+
+std::string exec(const char* cmd);
+
 class PaymentDeployer {
     
-    
 public:
-	PaymentDeployer(int numN, double P, int sourcet, int destinationt):
+	PaymentDeployer(int numN, long P, int sourcet, int destinationt):
 		numNodes(numN),payment(P),source(sourcet),destination(destinationt){};
+
 
     void setAmount(double am){ payment=am; }
     
     virtual int  RunSolver(std::vector<std::vector<double>> & flow, double & totalFee)=0;
 	virtual int  RunSolverOld(std::vector<std::vector<double>> & flow, double & totalFee){};
     
-protected:
-    
-    int numNodes;
-	double payment;
-	int source;
-	int destination;
-
-
-	enum solverErrors : int  {COULD_NOT_OPEN_DATA_FILE, COULD_NOT_OPEN_OUTPUT_FILE, PAYMENT_FAILED};
-    
-    
-}
-
-class PaymentDeployerProportional: public PaymentDeployer {
-public:
-	PaymentDeployerProportional(int numN, double P, int sourcet, int destinationt):
-		PaymentDeployer(numN,P,sourcet,destinationt){};
-
-	void AddPaymentChannel(int A, int B, double resFundsA, double resFundsB, double sfeeA, double sfeeB, double, double);
-	virtual ~PaymentDeployer();
-	void setAmount(double am){ payment=am; }
-	int  RunSolver(std::vector<std::vector<double>> & flow, double & totalFee);
-	int  RunSolverOld(std::vector<std::vector<double>> & flow, double & totalFee);
-
-protected:
-	double resFunds(int A,int B);
-	double sendingFee(int x,int y);
-	double receivingFee(int x,int y);
-
-
+	double resFunds(int x,int y);
 
 	class PaymentChannel {
 
-		public:
-			PaymentChannel(int At,int Bt, double resFundsAt,
-					double resFundsBt, double sendingFeeAt, double sendingFeeBt,
-					double receivingFeeAt, double receivingFeeB):
-				A(At),B(Bt),resFundsA(resFundsAt),resFundsB(resFundsBt),
-				sendingFeeA(sendingFeeAt),sendingFeeB(sendingFeeBt),
-				receivingFeeA(receivingFeeAt),receivingFeeB(receivingFeeB){};
 
-				int A,B;
-				double resFundsA, resFundsB;
-				double sendingFeeA, sendingFeeB;
-				double receivingFeeA, receivingFeeB;
+			public:
+				PaymentChannel(int At,int Bt, double resFundsAt, double resFundsBt):
+					A(At),B(Bt),resFundsA(resFundsAt),resFundsB(resFundsBt){}
 
-			};
+					//id of the endpoints
+					int A,B;
+
+					//residual funds of endpoints
+					double resFundsA, resFundsB;
+	};
 
 
-	
+protected:
+
+    int numNodes;
+
+    //the payment is expressed in cents of a satoshi
+	long payment;
+
+	int source;
+	int destination;
+
     std::map<std::pair<int,int>, PaymentChannel> channels;
 
-
+	enum solverErrors : int  {COULD_NOT_OPEN_DATA_FILE, COULD_NOT_OPEN_OUTPUT_FILE, PAYMENT_FAILED};
+    
 };
+
 
 #define EPSILON             1E-15
 
 
 #endif /* GLPK_PAYMENTDEPLOYER_H_ */
+

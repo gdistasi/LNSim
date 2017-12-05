@@ -6,6 +6,8 @@
 #define SATOSHI 1e-8
 #define MINIMUM_UNIT SATOSHI
 
+typedef unsigned long ln_units;
+
 /* Base is the way to specify the fee based on a base fee plus a proportional part */
 /* Fixed just the proportional part */
 /* General is the way where the fee is a piecewise continous function */
