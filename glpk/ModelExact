@@ -35,18 +35,12 @@ s.t. binary{x in N, y in N}: x[i,j] >= flow[x,y]
 s.t. capcon{x in N, y in N}: flow[x,y] <= r[x,y];
 /* capacity constraint */
 
-
-
 s.t. flocon{z in N: z <> source and z <> destination}: sum{x in N} (flow[x,z]) = 
 					 sum{k in N} (flow[z,k] + <<{p in 1..sendingFeeNumRegions[z,k]-1} sendingFeeLimits[z,k,p]; {p in 1..sendingFeeNumRegions[z,k]} sendingFeeRates[z,k,p]>> flow[z,k] + x[z,k]* baseSendingFee[z,k]);
 /* flow conservation constraint */
 
 
-s.t. endToEnd: sum{x in N: x <> source} flow[source,x]  = P + sum{x in N, y in N}(  
-
-<<{p in 1..receivingFeeNumRegions[x,y]-1} receivingFeeLimits[x,y,p]; {p in 1..receivingFeeNumRegions[x,y]} receivingFeeRates[x,y,p]>> flow[x,y] ) +
-
-sum{x in N, y in N: x <> source} <<{p in 1..sendingFeeNumRegions[x,y]-1} sendingFeeLimits[x,y,p]; {p in 1..sendingFeeNumRegions[x,y]} sendingFeeRates[x,y,p]>> flow[x,y]; 
+s.t. endToEnd: sum{x in N: x <> source} flow[source,x]  = P + sum{x in N, y in N: x <> source} <<{p in 1..sendingFeeNumRegions[x,y]-1} sendingFeeLlimits[x,y,p]; {p in 1..sendingFeeNumRegions[x,y]} sendingFeeRates[x,y,p]>> flow[x,y]; 
 
 
 s.t. endToEnd2: sum{x in N: x <> destination} flow[x, destination] = P;
