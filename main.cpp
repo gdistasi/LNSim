@@ -8,8 +8,14 @@
 #include <cmath>
 #include <iostream>
 #include "defs.h"
+#include <string.h>
+#include <stdio.h>
+
+#include "glpk/PaymentDeployerExact.h"
 
 #include <getopt.h>
+
+using namespace std;
 
 string modelsDirectory="glpk";
 
@@ -90,7 +96,15 @@ int main(int argc, char * * argv){
 	double receivingFee=0;
 	double positiveSlope=sendingFee;
 	double negativeSlope=sendingFee*0.01;
+	double slow=0.001;
+	double shigh=0.001;
+
+
 	int averageNumSlopes=3;
+    
+    ResolutionMethod resMethod=ResolutionMethod::EXACT;
+    FeeType feePolicy=FeeType::GENERAL;
+    PaymentMethod payMethod=PaymentMethod::SINGLEPATH;
 
 	//handling of options
 	while (1)
@@ -104,10 +118,13 @@ int main(int argc, char * * argv){
 	          {"numNodes",    required_argument, 0, 'n'},
 			  {"numSources",    required_argument, 0, 'q'},
 			  {"numDestinations",    required_argument, 0, 'w'},
-			  {"connectionProbability",    required_argument, 0, 'p'},
+			  {"connectionProbability",    required_argument, 0, 'P'},
 	          {"minFundsChannels",    required_argument, 0, 'm'},
 			  {"maxFundsChannels",    required_argument, 0, 'M'},
 			  {"modelsDirectory",   required_argument, 0, 'd'},
+              {"feePolicy", required_argument, 0, 'f'},
+			  {"resolutionMethod", required_argument, 0, 'r'},
+			  {"paymentMethod", required_argument, 0, 'p'},
 			  {"seed",   required_argument, 0, 'S'},
 
 	          {0, 0, 0, 0}
@@ -115,7 +132,7 @@ int main(int argc, char * * argv){
 	      /* getopt_long stores the option index here. */
 	      int option_index = 0;
 
-	      int c = getopt_long (argc, argv, "s:v:i:t:n:p:m:M:",
+	      int c = getopt_long (argc, argv, "s:v:i:t:n:p:m:M:r:f:P:",
 	                       long_options, &option_index);
 
 	      /* Detect the end of the options. */
@@ -154,7 +171,7 @@ int main(int argc, char * * argv){
 	        	numNodes = atoi(optarg);
 	        	break;
 
-	        case 'p':
+	        case 'P':
 	        	connectionProbability = atof(optarg);
 	        	break;
 
@@ -179,6 +196,41 @@ int main(int argc, char * * argv){
 	        case 'w':
 	        	numDestinations=atoi(optarg);
 	        	break;
+                
+            case 'f':
+                if (strcmp("base", optarg)==0){
+                    feePolicy = FeeType::BASE;
+                } else if (strcmp("general", optarg)==0){
+                    feePolicy = FeeType::GENERAL;
+                } else {
+                  cerr << "Fee type " << optarg << "  not supported. \n";
+                  abort();
+                }	        
+                break;    
+                
+            case 'r':
+                if (strcmp("exact", optarg)==0){
+                    resMethod=ResolutionMethod::EXACT;
+                } else if (strcmp("heuristic", optarg)==0){
+                    resMethod=ResolutionMethod::HEURISTIC;
+                } else {
+                  cerr << "Resolution method " << optarg << " not supported.\n";
+                  abort();
+                }
+                break;
+                
+
+            case 'p':
+                if (strcmp("sp", optarg)==0){
+                    payMethod=PaymentMethod::SINGLEPATH;
+                } else if (strcmp("multipath", optarg)==0){
+                	payMethod=PaymentMethod::MULTIPATH;
+                } else {
+                  cerr << "Payment method " << optarg << " not supported.\n";
+                  abort();
+                }
+                break;
+
 	        case '?':
 	          /* getopt_long already printed an error message. */
 	        	exit(1);
@@ -193,10 +245,20 @@ int main(int argc, char * * argv){
 
 	Stats stats;
 
-	FeeType feeType=PROPORTIONAL;
+    
 
-	LightningNetwork net = NetworkGenerator::generate(numNodes, connectionProbability, minFund, maxFund, sendingFee,
-													receivingFee, positiveSlope, negativeSlope, feeType, seed, averageNumSlopes);
+	LightningNetwork * net=0;
+l
+
+	if (feePolicy = GENERAL_OPTIMIZED){
+		net = new NetworkGenerator::generateOptimized(numNodes, connectionProbability, minFund, maxFund, sendingFee,
+													  shigh, slow, seed);
+	} else {
+		net = new NetworkGenerator::generate(numNodes, connectionProbability, minFund, maxFund, sendingFee,
+			receivingFee, positiveSlope, negativeSlope, feePolicy, seed, averageNumSlopes);
+	}
+
+
 
 	NormalSizePoissonTimePaymentGenerator paymGen(net.getNumNodes(), numSources, numDestinations,
 										  seed, meanSizePayments, variancePayments, intervalPayments);
@@ -220,13 +282,65 @@ int main(int argc, char * * argv){
 
 		double totalFee=0;
 
-		switch(net.getFeePolicy()){
+		
+        PaymentDeployer * pd;
+        
+        if (    resMethod==ResolutionMethod::EXACT &&
+                ( payMethod == PaymentMethod::SINGLEPATH || payMethod == PaymentMethod::MULTIPATH )) {
+            
+            
+            std::vector<std::vector<double>> flows(net.getNumNodes(), vector<double>(net.getNumNodes()));
+			double fee=0;
+            
+            pd = new PaymentDeployerExact(net.getNumNodes(), amount, src, dst);
 
-		case FeeType::FIXED:
-			//NON FATTIBILE PER IL MOM
-			break;
+			for ( PaymentChannel * ch: net.getChannels()){
 
-		case FeeType::BILANCING:
+                /* add directional channel in one direction ... */
+                (dynamic_cast<PaymentDeployerExact *>(pd))->AddPaymentChannel(ch->getEndPointA()->getId(), ch->getEndPointB()->getId(),
+                            ch->getResidualFundsA(),	ch->getResidualFundsB(), 
+							(dynamic_cast<PaymentChannelGeneralFees  *>(ch))->getPointsA(),
+							(dynamic_cast<PaymentChannelGeneralFees*> (ch))->getSlopesA());
+                
+                /* ... and the other */
+                (dynamic_cast<PaymentDeployerExact *>(pd))->AddPaymentChannel(ch->getEndPointB()->getId(), ch->getEndPointA()->getId(),
+                            ch->getResidualFundsB(),ch->getResidualFundsA(), 
+                            (dynamic_cast<PaymentChannelGeneralFees  *>(ch))->getPointsB(),
+							dynamic_cast<PaymentChannelGeneralFees*>(ch)->getSlopesB());
+            }
+        
+                    
+        }
+        
+        pd->setAmount(amount);
+
+        std::vector<std::vector<double>> flows(net.getNumNodes(), vector<double>(net.getNumNodes()));
+		double fee=0;
+
+		long transferredAmount=0;
+
+		if (pd->RunSolver(flows,fee)==0){
+					std::cout << "Success!\n";
+					totalFee+=fee;
+					net.makePayments(flows);
+					stats.feesPaid+=totalFee;
+					transferredAmount+=amount;
+        } else {
+					std::cerr<<"Unsuccess!\n";
+					stats.unsuccess+=1;
+                    break;
+        }
+
+        if (transferredAmount == amount)
+			stats.success+=1;
+        else
+            stats.unsuccess+=1;
+            
+            
+            
+            
+/*
+		case ResolutionMethod::HEURISTIC:
 		{
 			double transferredAmount=0;
 
@@ -250,7 +364,7 @@ int main(int argc, char * * argv){
 
 
 					pd.AddPaymentChannel(ch->getEndPointA()->getId(), ch->getEndPointB()->getId(), ch->getResidualFundsA(),
-							ch->getResidualFundsB(), sendingFeeA, sendingFeeB, receivingFeeA, receivingFeeB);
+					ch->getResidualFundsB(), sendingFeeA, sendingFeeB, receivingFeeA, receivingFeeB);
 				}
 
 				double imb=findSmallestImbalance(net.getChannels());
@@ -321,12 +435,13 @@ int main(int argc, char * * argv){
 		}
 
 
-		case FeeType::GENERAL:{
-			PaymentDeployer pd(net.getNumNodes(), amount, src, dst);
+		case FeeType::GENERIC:{
+				PaymentDeployer pd(net.getNumNodes(), amount, src, dst);
+				break;
 
-
+			}
 		}
-		}
+*/ 
 
 
 

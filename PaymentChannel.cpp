@@ -13,7 +13,7 @@
 #include "defs.h"
 
 PaymentChannel::PaymentChannel(PaymentChannelEndPoint * A,
-		PaymentChannelEndPoint * B, double resFundsA, double resFundsB) {
+		PaymentChannelEndPoint * B, ln_units resFundsA, ln_units resFundsB) {
 	this->A=A;
 	this->B=B;
 	this->residualFundsA=resFundsA;
@@ -31,7 +31,7 @@ void PaymentChannel::PayA(double Payment) {
 
 	std::cout << "Res B" << residualFundsB << " Payment " << P << "\n";
 
-	assert(residualFundsB-P>-MINIMUM_UNIT );
+	assert( residualFundsB-P>-MINIMUM_UNIT );
 	this->residualFundsB-=P;
 
 	std::cout << std::setprecision(15) << "paying " << P << "\n";
@@ -50,11 +50,15 @@ void PaymentChannel::PayB(double payment) {
 }
 
 
-void PaymentChannelGeneralFees::addSlope(int start, double coeff){
-  coefficients.push_back(coeff);
-  starting_points.push_back(start);
+void PaymentChannelGeneralFees::addSlopeA(long start, double coeff){
+  coefficientsA.push_back(coeff);
+  starting_pointsA.push_back(start);
 }
 
+void PaymentChannelGeneralFees::addSlopeB(long start, double coeff){
+  coefficientsB.push_back(coeff);
+  starting_pointsB.push_back(start);
+}
 
 
 

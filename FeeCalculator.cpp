@@ -17,8 +17,33 @@ double FeeCalculator::getSendingFee(double payment, PaymentChannel & p, int A, i
 
 	if (feeType==FIXED){
 
+
 	}
 
 	return baseFee;
 
+}
+
+
+millisatoshis FeeCalculatorOptimized::calcFee(millisatoshis P, PaymentChannel * pc,  bool reverse=false){
+
+	ln_units fundsA,fundsB;
+
+	fundsA = !reverse ? pc->getResidualFundsA() : pc->getResidualFundsB();
+	fundsB = reverse ? pc->getResidualFundsA() : pc->getResidualFundsB();
+
+	ln_units imb = fundsA - fundsB;
+
+	millisatoshis fee=0;
+
+	if (fundsA > fundsB) {
+		if ( P <= imb )
+			fee = baseFee + slow * P;
+	} else {
+		fee = baseFee + slow * imb + (P-imb) * shigh;
+	} else {
+		fee = baseFee + P * shigh;
+	}
+
+	return fee;
 }

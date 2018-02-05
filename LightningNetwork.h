@@ -51,14 +51,16 @@ public:
 	friend class NetworkGenerator;
 
 protected:
+
+
+
 	std::vector<PaymentChannelEndPoint *> nodes;
 	std::vector<PaymentChannel *> channels;
 	std::map<std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>, PaymentChannel *> mapCh;
 
 
+
 	enum FeeType feePolicy;
-
-
 
 };
 

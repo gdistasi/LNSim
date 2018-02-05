@@ -5,60 +5,48 @@
  *      Author: giovanni
  */
 
-#ifndef GLPK_PAYMENTDEPLOYER_H_
-#define GLPK_PAYMENTDEPLOYER_H_
+#ifndef GLPK_PAYMENTDEPLOYEREX_H_
+#define GLPK_PAYMENTDEPLOYEREX_H_
 
 #include <map>
 #include <stdio.h>
 #include <vector>
+#include <string.h>
 
-class PaymentDeployer {
+#include "PaymentDeployer.h"
+
+using namespace std;
+
+class PaymentDeployerExact: public PaymentDeployer {
+
 public:
-	PaymentDeployerExact(int numN, double P, int sourcet, int destinationt):
-		numNodes(numN),payment(P),source(sourcet),destination(destinationt){};
 
-	void AddPaymentChannel(int A, int B, double resFundsA, double resFundsB, std::vector<long> & sp, std::vector<double> & cfs);
-	virtual ~PaymentDeployerExact();
-	void setAmount(double am){ payment=am; }
+	PaymentDeployerExact(int numN, double P, int sourcet, int destinationt):PaymentDeployer(numN,P,sourcet,destinationt){};
+
+	void AddPaymentChannel(int A, int B, long resFundsA, long resFundsB, std::vector<long> sp, std::vector<double> cfs);
+
 	int  RunSolver(std::vector<std::vector<double>> & flow, double & totalFee);
-	int  RunSolverOld(std::vector<std::vector<double>> & flow, double & totalFee);
 
-protected:
-	double resFunds(int A,int B);
-	double sendingFee(int x,int y);
-	double receivingFee(int x,int y);
+	std::vector<double> getCoefficients(int x, int y){ return fees[pair<int,int>(x,y)].coefficients; }
+	std::vector<long> getPoints(int x, int y){ return fees[pair<int,int>(x,y)].starting_points; }
 
+	virtual ~PaymentDeployerExact(){}
 
+	class PiecewiseLinearFee {
 
-	class PaymentChannel {
+	public:
 
 		public:
-			PaymentChannel(int At, int Bt, long rfA, long rfB, std::vector<long> & sp, std::vector<double> & cfs):
-				A(At),B(Bt),starting_points(sp),coefficients(cfs),resFundsA(rfA),resFundsB(rfB){}
+			std::vector<long> starting_points;
+			std::vector<double> coefficients;
 
-//			std::vector<int> & starting_points;
-//			std::vector<double> & coefficients;
+	};
 
-				int A,B;
-				long resFundsA, resFundsB;
-				std::vector<long> starting_points;
-				std::vector<double> coefficients;
+protected:
 
-			};
-
-
-	int numNodes;
-	double payment;
-	int source;
-	int destination;
-
-	std::map<std::pair<int,int>, PaymentChannel> channels;
-
-	enum solverErrors : int  {COULD_NOT_OPEN_DATA_FILE, COULD_NOT_OPEN_OUTPUT_FILE, PAYMENT_FAILED};
+	std::map<std::pair<int,int>, PiecewiseLinearFee> fees;
 
 };
-
-#define EPSILON             1E-15
 
 
 #endif /* GLPK_PAYMENTDEPLOYER_H_ */

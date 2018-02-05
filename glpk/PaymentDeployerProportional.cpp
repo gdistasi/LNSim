@@ -1,43 +1,44 @@
-/*
- * PaymentDeployer.cpp
- *
- *  Created on: 07 lug 2016
- *      Author: giovanni
- */
 
-#include "PaymentDeployer.h"
-#include <stdlib.h>
-#include <math.h>
-
-#include <cstdio>
-#include <iostream>
-#include <memory>
-#include <stdexcept>
-#include <string>
-
-#include <string.h>
+#include "PaymentDeployerProportional.h"
 
 #include <assert.h>
 
+void PaymentDeployerProportional::AddPaymentChannel(int A, int B, double resFundsA,
+		double resFundsB, double sendingFeeA) {
 
-#include "PaymentDeployerExact.h"
+	//channels.insert[pair<int,int>(A,B)]=PaymentChannel(A,B,resFundsA,resFundsB, feeA, feeB);
+	//channels.insert(std::map<std::pair<int,int>,PaymentChannel>::value_type(pair<int,int>(A,B),
+				    //PaymentChannel(A,B,resFundsA,resFundsB));
 
-using namespace std;
-
-
-
-void PaymentDeployerExact::AddPaymentChannel(int A, int B, long resFundsA, long resFundsB, std::vector<long> sp, std::vector<double> cfs){
-
-
+	channels[std::pair<int,int>(A,B)]=PaymentChannel(A,B,resFundsA,resFundsB);
 
 
+	if ( A==source && sendingFeeA != 0 ){
+		std::cerr << "Sending fee cannot be different from 0 for the source!\n";
+		exit(1);
+	}
 
 
+	propFee[std::pair<int,int>(A,B)]=sendingFeeA;
 }
 
 
+double PaymentDeployerProportional::sendingFee(int x,int y){
+		return propFee.find(std::pair<int,int>(x,y))->second;
+}
 
-int  PaymentDeployerExact::RunSolver(std::vector<std::vector<double>> & flow, double & totalFee) {
+/*
+double PaymentDeployerProportional::receivingFee(int x,int y){
+	/* we suppose the payment channels are added following the node id order - HACK
+	if (x<y){
+		return channels.find(pair<int,int>(x,y))->second.receivingFeeB;
+	} else {
+		return channels.find(pair<int,int>(y,x))->second.receivingFeeA;
+	}
+}*/
+
+
+int  PaymentDeployerProportional::RunSolver(std::vector<std::vector<double>> & flow, double & totalFee) {
 
 		int i, j;
 		char commandString[1024], solStatus[1024];
@@ -51,8 +52,8 @@ int  PaymentDeployerExact::RunSolver(std::vector<std::vector<double>> & flow, do
 
 		// open data file
 		FILE *fpDat = fopen(dataFile, "w");
-		if (fpDat == NULL) {
-			cout << "failed to open file: " << dataFile << endl;
+		if (fpDat == 0) {
+			cout << "failed to open file: " << dataFile << "\n";
 			return COULD_NOT_OPEN_DATA_FILE;
 		}
 
@@ -86,7 +87,7 @@ int  PaymentDeployerExact::RunSolver(std::vector<std::vector<double>> & flow, do
 
 
 		// residual funds constraints
-		fprintf(fpDat, "param sendingFeeNumRegions:\n");
+		fprintf(fpDat, "param sendingFee:\n");
 		for (i = 0; i < nodeNum; i++) {
 			fprintf(fpDat, "%d ", i);
 		}
@@ -96,57 +97,31 @@ int  PaymentDeployerExact::RunSolver(std::vector<std::vector<double>> & flow, do
 		for (i = 0; i < nodeNum; i++) {
 			fprintf(fpDat, "%d ", i);
 			for (j = 0; j < nodeNum; j++) {
-				fprintf(fpDat, "%d ", getCoefficients(i,j).size() );
+				fprintf(fpDat, "%.8lf ", sendingFee(i,j));
 			}
 			fprintf(fpDat, "\n");
 		}
 		fprintf(fpDat, ";\n\n");
 
-		// residual funds constraints
-		fprintf(fpDat, "param sendingFeeRates :=\n");
-		for (i = 0; i < nodeNum; i++) {
-			for (j = 0; j < nodeNum; i++) {
-				fprintf(fpDat, "[%d,%d,*] ", i,j);
-				for (int p=1; p <= getCoefficients(i,j).size(); p++){
-					fprintf(fpDat, " %d %.8lf   ", p, getCoefficients(i,j)[p-1]);
-				}
-			}
-		}
-
-		fprintf(fpDat, " ;\n");
 
 		// residual funds constraints
-				fprintf(fpDat, "param sendingFeeLimits :=\n");
-				for (i = 0; i < nodeNum; i++) {
-					for (j = 0; j < nodeNum; i++) {
-						fprintf(fpDat, "[%d,%d,*] ", i,j);
-						for (int p=1; p <= getPoints(i,j).size(); p++){
-							fprintf(fpDat, " %d %d   ", p, getPoints(i,j)[p-1]);
-						}
-					}
-				}
-
-				fprintf(fpDat, " ;\n");
-
-
-	/*	// residual funds constraints
-			fprintf(fpDat, "param receivingFee:\n");
+			/*fprintf(fpDat, "param receivingFee:\n");
 			for (i = 0; i < nodeNum; i++) {
 				fprintf(fpDat, "%d ", i);
 			}
 			fprintf(fpDat, ":=\n");
 
 			// write down the r matrix
-			for (i = 0; i < nodeNum; i++) {
+			/*for (i = 0; i < nodeNum; i++) {
 				fprintf(fpDat, "%d ", i);
 				for (j = 0; j < nodeNum; j++) {
 					fprintf(fpDat, "%.8lf ", receivingFee(i,j));
 				}
 				fprintf(fpDat, "\n");
 			}
-			fprintf(fpDat, ";\n\n");
+			fprintf(fpDat, ";\n\n");*/
 
-*/
+
 
 		fprintf(fpDat, "param source := %d;\n\n", source);
 		fprintf(fpDat, "param destination := %d;\n\n", destination);
@@ -158,8 +133,8 @@ int  PaymentDeployerExact::RunSolver(std::vector<std::vector<double>> & flow, do
 
 
 		sprintf(commandString, "glpsol --model %s --data %s -w %s",
-						(modelsDirectory+string("/ModelExact")).c_str(), dataFile, outputFile);
-		cout << commandString << endl;
+						(modelsDirectory+string("/Model")).c_str(), dataFile, outputFile);
+		std::cout << commandString << std::endl;
 	//	::system(commandString);
 
 	//	sprintf(commandString, "glpsol --model %s --data %s -w %s",
@@ -213,7 +188,6 @@ int  PaymentDeployerExact::RunSolver(std::vector<std::vector<double>> & flow, do
 		std::cout<<"Total fees " << totalFee << "\n";
 
 
-
 		for (int i=0; i<rows-1; i++){
 			fscanf(fpOut, "%*[^\n]\n", NULL);
 		}
@@ -246,10 +220,5 @@ int  PaymentDeployerExact::RunSolver(std::vector<std::vector<double>> & flow, do
 
 		return 0;
 }
-
-
-
-
-
 
 

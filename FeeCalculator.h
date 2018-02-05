@@ -20,6 +20,7 @@ public:
 
 	double getSendingFee(double payment, PaymentChannel & p, int A, int B);
 
+	long getSendingFee2(ln_units payment, PaymentChannel & p, double basefee, double  slow, double shigh);
 
 	virtual ~FeeCalculator();
 
@@ -31,4 +32,16 @@ protected:
 
 };
 
+
+class FeeCalculatorOptimized {
+
+	FeeCalculatorOptimized(double baseFeeT, double slow, double shigh):baseFee(baseFeeT),slow(slow),shigh(shigh){}
+
+	millisatoshis calcFee(millisatoshis P, PaymentChannel * pc, bool reverse);
+
+	double baseFee, slow, shigh;
+
+};
+
 #endif /* FEECALCULATOR_H_ */
+
