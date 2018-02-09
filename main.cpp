@@ -248,14 +248,16 @@ int main(int argc, char * * argv){
     
 
 	LightningNetwork * net=0;
-l
+
 
 	if (feePolicy = GENERAL_OPTIMIZED){
-		net = new NetworkGenerator::generateOptimized(numNodes, connectionProbability, minFund, maxFund, sendingFee,
+		net = NetworkGenerator::generateOptimized(numNodes, connectionProbability, minFund, maxFund, sendingFee,
 													  shigh, slow, seed);
 	} else {
-		net = new NetworkGenerator::generate(numNodes, connectionProbability, minFund, maxFund, sendingFee,
-			receivingFee, positiveSlope, negativeSlope, feePolicy, seed, averageNumSlopes);
+//		net = new NetworkGenerator::generate(numNodes, connectionProbability, minFund, maxFund, sendingFee,
+//			receivingFee, positiveSlope, negativeSlope, feePolicy, seed, averageNumSlopes);
+		std::cerr << "Not supported! " << endl;
+		exit(1);
 	}
 
 
@@ -267,7 +269,7 @@ l
 	double amount;
 	int src,dst;
 
-	double initFunds=net.totalFunds();
+	double initFunds = net.totalFunds();
 
 
 	do {

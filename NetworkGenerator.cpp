@@ -62,10 +62,12 @@ LightningNetwork * NetworkGenerator::generateOptimized(int numNodes, double conn
 													   double minFund, double maxFund, long baseSendingFee_inMilliSatoshi,
 													   double shigh, double slow, double seed){
 
-	LightningNetwork * net= new LightningNetwork();
+	LightningNetwork * net= generateBase(numNodes, connProb,
+			   minFund, maxFund);
 
-
-
+	for (PaymentChannel * ch: net.Channels()){
+		ch->setFeeCalculator(new FeeCalculatorOptimized(baseSendingFee_inMilliSatoshi, slow,shigh)); //FIXME memory leak
+	}
 
 }
 

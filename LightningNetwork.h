@@ -38,7 +38,7 @@ public:
 		this->feePolicy = feePolicy;
 	}
 
-	const std::vector<PaymentChannel*>& getChannels() const {
+	const std::vector<PaymentChannel*>& getChannels()  {
 		return channels;
 	}
 

@@ -27,3 +27,4 @@ enum PaymentMethod : int { SINGLEPATH, ITERATIVE, MULTIPATH };
 double mytrunc(double a);
 
 #endif
+

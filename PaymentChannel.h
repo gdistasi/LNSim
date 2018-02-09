@@ -43,6 +43,7 @@ public:
 		this->residualFundsB = residualFundsB;
 	}
 
+	void setFeeCalculator(FeeCalculator * fc){ this->feeCalc=fc;}
 
 	PaymentChannelEndPoint * getEndPointA() const { return A; }
 	PaymentChannelEndPoint * getEndPointB() const { return B; }
@@ -55,9 +56,14 @@ public:
 	virtual bool doesFeeDependOnAmount(){ return false;}
 	virtual void calcLinearizedFee(double paym_amount, double & sending, double  & receiving, bool reverse=false) const{};
 
+	virtual millisatoshis calcFee(millisatoshis P, PaymentChannel * pc, bool reverse) { return feeCalc(P,pc,reverse);   }
+)
+
+
 protected:
 	ln_units residualFundsA,residualFundsB;
 	PaymentChannelEndPoint * A,*B;
+	FeeCalculator * feeCalc;
 
 };
 
