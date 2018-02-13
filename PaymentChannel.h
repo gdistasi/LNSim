@@ -8,14 +8,11 @@
 #ifndef PAYMENTCHANNEL_H_
 #define PAYMENTCHANNEL_H_
 
-
 #include <vector>
-
-
-#include "PaymentChannelEndPoint.h"
-
 #include <assert.h>
 
+#include "PaymentChannelEndPoint.h"
+#include "FeeCalculator.h"
 #include "defs.h"
 
 
@@ -56,8 +53,15 @@ public:
 	virtual bool doesFeeDependOnAmount(){ return false;}
 	virtual void calcLinearizedFee(double paym_amount, double & sending, double  & receiving, bool reverse=false) const{};
 
-	virtual millisatoshis calcFee(millisatoshis P, PaymentChannel * pc, bool reverse) { return feeCalc(P,pc,reverse);   }
-)
+	virtual millisatoshis calcFee(millisatoshis P, PaymentChannel * pc, bool reverse) { return feeCalc->calcFee(P,pc,reverse);   }
+
+	std::vector<unsigned long> getPoints(bool reverse=false);
+
+	std::vector<unsigned long> getSlopes(bool reverse=false);
+
+
+	unsigned long getBaseFee(bool reverse=false);
+
 
 
 protected:
@@ -76,10 +80,7 @@ public:
 		PaymentChannel(A,B,resFundsA,resFundsB){
 
 		baseSendingFee=0; baseReceivingFee=0;
-
-
 	}
-
 
 	void setBaseFees(double sf, double rf){
 		baseSendingFee=sf;
@@ -94,8 +95,6 @@ public:
 		sending=baseSendingFee;
 		receiving=baseReceivingFee;
 	}
-
-
 
 protected:
 	double baseSendingFee,baseReceivingFee;
@@ -210,7 +209,6 @@ class PaymentChannelBalancingFee: public PaymentChannel {
 
 public:
 
-
 	PaymentChannelBalancingFee(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, double resFundsA, double resFundsB):
 		PaymentChannel(A,B,resFundsA,resFundsB){}
 
@@ -224,6 +222,7 @@ public:
 	}
 
 	virtual void calcLinearizedFee(double paym_amount, double & sending, double & receiving, bool reverse=false) const {
+
 			if (!reverse){
 
 				if (residualFundsA > residualFundsB){

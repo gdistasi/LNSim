@@ -22,23 +22,28 @@ class PaymentDeployerExact: public PaymentDeployer {
 public:
 
 	PaymentDeployerExact(int numN, double P, int sourcet, int destinationt):PaymentDeployer(numN,P,sourcet,destinationt){};
-
-	void AddPaymentChannel(int A, int B, long resFundsA, long resFundsB, std::vector<long> sp, std::vector<double> cfs);
-
+	void AddPaymentChannel(int A, int B, unsigned long resFundsA, unsigned long resFundsB, unsigned long baseFee, std::vector<long> sp, std::vector<unsigned long> cfs);
 	int  RunSolver(std::vector<std::vector<double>> & flow, double & totalFee);
 
-	std::vector<double> getCoefficients(int x, int y){ return fees[pair<int,int>(x,y)].coefficients; }
-	std::vector<long> getPoints(int x, int y){ return fees[pair<int,int>(x,y)].starting_points; }
+	void AddPaymentChannel(int A, int B, unsigned long resFundsA, unsigned long resFundsB, unsigned long baseFee, std::vector<unsigned long> sp, std::vector<unsigned long> cfs);
+
+	std::vector<unsigned long> getCoefficients(int x, int y){ return fees[pair<int,int>(x,y)].coefficients; }
+	std::vector<unsigned long> getPoints(int x, int y){ return fees[pair<int,int>(x,y)].starting_points; }
+	unsigned long getBaseFee(int x, int y){ return fees[pair<int,int>(x,y)].baseFee; }
 
 	virtual ~PaymentDeployerExact(){}
 
 	class PiecewiseLinearFee {
-
 	public:
+		PiecewiseLinearFee(unsigned long baseFee, std::vector<unsigned long> starting_points, std::vector<unsigned long> coefficients):
+			baseFee(baseFee),coefficients(coefficients),starting_points(starting_points){ }
+
+		PiecewiseLinearFee(){ baseFee=0; }
 
 		public:
-			std::vector<long> starting_points;
-			std::vector<double> coefficients;
+			unsigned long baseFee;
+			std::vector<unsigned long> starting_points;
+			std::vector<unsigned long> coefficients;
 
 	};
 

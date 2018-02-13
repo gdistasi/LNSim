@@ -14,17 +14,16 @@
 
 PaymentChannel::PaymentChannel(PaymentChannelEndPoint * A,
 		PaymentChannelEndPoint * B, ln_units resFundsA, ln_units resFundsB) {
+
 	this->A=A;
 	this->B=B;
 	this->residualFundsA=resFundsA;
 	this->residualFundsB=resFundsB;
-}
 
-PaymentChannel::~PaymentChannel() {
-	// TODO Auto-generated destructor stub
 }
 
 void PaymentChannel::PayA(double Payment) {
+
 	long int units=Payment/MINIMUM_UNIT;
 
 	double P=((double)units)*MINIMUM_UNIT;
@@ -61,4 +60,37 @@ void PaymentChannelGeneralFees::addSlopeB(long start, double coeff){
 }
 
 
+PaymentChannel::~PaymentChannel(){
+
+	if (feeCalc!=0){
+		delete feeCalc;
+	}
+
+}
+
+
+/*
+std::vector<unsigned long> getPoints(bool reverse){
+
+	if (!reverse){
+		return feeCalc->getPoints(residualFundsA,residualFundsB);
+	else
+		return feeCalc->getPoints(residualFundsB,residualFundsA);
+
+}
+
+std::vector<unsigned long> getSlopes(bool reverse){
+
+	if (!reverse ) {
+		return feeCalc->getSlopes(residualFundsA,residualFundsB);
+	} else {
+		return feeCalc->getSlopes(residualFundsB,residualFundsA);
+	}
+
+}
+
+unsigned long getBaseFee(bool reverse) {
+	return feeCalc->getBaseFee();
+}
+*/
 

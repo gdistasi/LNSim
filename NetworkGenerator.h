@@ -19,12 +19,16 @@ public:
 	static LightningNetwork * generate(int numNodes, double connDegree, double minFund, double maxFund,
 							double sendingFee, double receivingFee, double positiveSlope, double negativeSlope, FeeType policy, int seed, int averageNumSlopes);
 
+
+	static LightningNetwork * generateBase(int numNodes, double connectionProbability,
+														   double minFund, double maxFund, double seed);
+
 	static LightningNetwork * generateOptimized(int numNodes, double connectionProbability,
-														   double minFund, double maxFund, long baseSendingFee_inMilliSatoshi,
+														   double minFund, double maxFund,
+														   long baseSendingFee_inMilliSatoshi,
 														   double shigh, double slow, double seed);
 
-	LightningNetwork * generateBase(int numNodes, double connectionProbability,
-														   double minFund, double maxFund);
+
 
 	bool isConnected(LightningNetwork & net);
 

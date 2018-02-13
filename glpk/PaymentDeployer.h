@@ -33,7 +33,6 @@ public:
 
 	class PaymentChannel {
 
-
 			public:
 				PaymentChannel(int At,int Bt, double resFundsAt, double resFundsBt):
 					A(At),B(Bt),resFundsA(resFundsAt),resFundsB(resFundsBt){}
@@ -52,7 +51,6 @@ protected:
 
     //the payment is expressed in cents of a satoshi
 	long payment;
-
 	int source;
 	int destination;
 

@@ -5,7 +5,7 @@ GPP = g++
 
 CPPOPTS = -std=c++11
 
-OBJS = main.o PaymentRequest.o NetworkGenerator.o PaymentsGenerator.o PaymentChannel.o FeeCalculator.o PaymentChannelEndPoint.o Gateway.o LightningNetwork.o glpk/PaymentDeployer.o utils.o
+OBJS = main.o FeeCalculator.o PaymentRequest.o NetworkGenerator.o PaymentsGenerator.o PaymentChannel.o FeeCalculator.o PaymentChannelEndPoint.o Gateway.o LightningNetwork.o glpk/PaymentDeployer.o utils.o
 OBJS += glpk/PaymentDeployerExact.o
 
 ALL: LNSimulator

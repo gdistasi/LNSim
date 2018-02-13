@@ -6,8 +6,8 @@
  */
 
 #include "NetworkGenerator.h"
+#include "FeeCalculator.h"
 #include "defs.h"
-
 
 #include <iostream>
 #include <random>
@@ -23,50 +23,16 @@ NetworkGenerator::~NetworkGenerator() {
 }
 
 
-LightningNetwork * NetworkGenerator::generateBase(int numNodes, double connProb,
-													   double minFund, double maxFund){
-	LightningNetwork * net= new LightningNetwork();
-
-		for (int i=0; i<numNodes; i++){
-				PaymentChannelEndPoint * n=new PaymentChannelEndPoint();
-				net->nodes.push_back(n);
-				n->setId(i);
-		}
-
-
-		std::default_random_engine generator(seed);
-		std::uniform_real_distribution<double> dist(0,1);
-		std::uniform_real_distribution<double> dist_funds(minFund,maxFund);
-
-		for (int i=0; i<numNodes; i++)
-					for (int j=i+1; j<numNodes; j++){
-
-						PaymentChannel * pc=0;
-
-						//if (i==j) continue;
-						double prob=dist(generator);
-
-						if (prob<connProb){
-							pc = new PaymentChannel(net->nodes[i], net->nodes[j]
-																mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)));
-
-							net->channels.push_back(pc);
-							net->mapCh.insert(std::map<std::pair<PaymentChannelEndPoint *,PaymentChannelEndPoint *>,PaymentChannel *>::value_type(
-							std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(net->nodes[i],net->nodes[j]),pc));
-
-						}
-
-}
 
 LightningNetwork * NetworkGenerator::generateOptimized(int numNodes, double connectionProbability,
-													   double minFund, double maxFund, long baseSendingFee_inMilliSatoshi,
+													   double minFund, double maxFund,
+													   long baseSendingFee_inMilliSatoshi,
 													   double shigh, double slow, double seed){
 
-	LightningNetwork * net= generateBase(numNodes, connProb,
-			   minFund, maxFund);
+	LightningNetwork * net= NetworkGenerator::generateBase(numNodes, connectionProbability, minFund, maxFund, seed);
 
-	for (PaymentChannel * ch: net.Channels()){
-		ch->setFeeCalculator(new FeeCalculatorOptimized(baseSendingFee_inMilliSatoshi, slow,shigh)); //FIXME memory leak
+	for (PaymentChannel * ch: net->getChannels()){
+		ch->setFeeCalculator(new FeeCalculatorOptimized(baseSendingFee_inMilliSatoshi, slow,shigh));
 	}
 
 }
@@ -99,9 +65,6 @@ LightningNetwork * NetworkGenerator::generate(int numNodes, double connProb,
 			std::uniform_int_distribution<int> num_slopes_distribution(0,3);
 			std::uniform_int_distribution<int> slopes_distance_distribution(0,SATOSHI*1000000);
 
-
-
-
 			net->feePolicy=feePolicy;
 
 			for (int i=0; i<numNodes; i++)
@@ -131,20 +94,20 @@ LightningNetwork * NetworkGenerator::generate(int numNodes, double connProb,
 							double fundsA,fundsB;
 							fundsA=dist_funds(generator);
 							fundsB=dist_funds(generator);
-							pc = new PaymentChannelProportionalFee(net.nodes[i], net.nodes[j], mytrunc(fundsA), mytrunc(fundsB));
+							pc = new PaymentChannelProportionalFee(net->nodes[i], net->nodes[j], mytrunc(fundsA), mytrunc(fundsB));
 							((PaymentChannelProportionalFee*)pc)->setProportionalFees(propSendingFee, propReceivingFee);
 							//std::cout << "FUNDS " << fundsA << " " << fundsB << "\n";
 							break;
 						}
 
 						case FeeType::BILANCING:{
-							PaymentChannelBalancingFee * pc = new PaymentChannelBalancingFee(net.nodes[i], net.nodes[j], mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)));
+							PaymentChannelBalancingFee * pc = new PaymentChannelBalancingFee(net->nodes[i], net->nodes[j], mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)));
 							((PaymentChannelBalancingFee*)pc)->setFeeSlopes(positiveSlope, negativeSlope);
 							break;
 						}
 
 						case FeeType::GENERAL:{
-							PaymentChannelGeneralFees * pc = new PaymentChannelGeneralFees(net.nodes[i], net.nodes[j], mytrunc(dist_funds(generator)),  mytrunc(dist_funds(generator)) );
+							PaymentChannelGeneralFees * pc = new PaymentChannelGeneralFees(net->nodes[i], net->nodes[j], mytrunc(dist_funds(generator)),  mytrunc(dist_funds(generator)) );
 							
 							pc->setBaseFeeA(10);
 							pc->setBaseFeeB(10);
@@ -171,7 +134,7 @@ LightningNetwork * NetworkGenerator::generate(int numNodes, double connProb,
 
 						net->channels.push_back(pc);
 						net->mapCh.insert(std::map<std::pair<PaymentChannelEndPoint *,PaymentChannelEndPoint *>,PaymentChannel *>::value_type(
-								std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(net.nodes[i],net.nodes[j]),pc));
+								std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(net->nodes[i],net->nodes[j]),pc));
 					}
 				}
 
@@ -218,4 +181,39 @@ bool isConnected(LightningNetwork & net){
 
 
 
+
+
+LightningNetwork * NetworkGenerator::generateBase(int numNodes, double connProb, double minFund, double maxFund, double seed){
+	LightningNetwork * net= new LightningNetwork();
+
+		for (int i=0; i<numNodes; i++){
+				PaymentChannelEndPoint * n=new PaymentChannelEndPoint();
+				net->nodes.push_back(n);
+				n->setId(i);
+		}
+
+
+		std::default_random_engine generator(seed);
+		std::uniform_real_distribution<double> dist(0,1);
+		std::uniform_real_distribution<double> dist_funds(minFund,maxFund);
+
+		for (int i=0; i<numNodes; i++)
+					for (int j=i+1; j<numNodes; j++){
+
+						PaymentChannel * pc=0;
+
+						//if (i==j) continue;
+						double prob=dist(generator);
+
+						if (prob<connProb){
+							pc = new PaymentChannel(net->nodes[i], net->nodes[j],
+																mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)));
+
+							net->channels.push_back(pc);
+							net->mapCh.insert(std::map<std::pair<PaymentChannelEndPoint *,PaymentChannelEndPoint *>,PaymentChannel *>::value_type(
+							std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(net->nodes[i],net->nodes[j]),pc));
+						}
+
+		}
+}
 

@@ -202,6 +202,8 @@ int main(int argc, char * * argv){
                     feePolicy = FeeType::BASE;
                 } else if (strcmp("general", optarg)==0){
                     feePolicy = FeeType::GENERAL;
+                } else if  (strcmp("general_optimized", optarg)==0){
+                    feePolicy = FeeType::GENERAL_OPTIMIZED;
                 } else {
                   cerr << "Fee type " << optarg << "  not supported. \n";
                   abort();
@@ -241,12 +243,7 @@ int main(int argc, char * * argv){
 	        }
 	    }
 
-
-
 	Stats stats;
-
-    
-
 	LightningNetwork * net=0;
 
 
@@ -255,26 +252,26 @@ int main(int argc, char * * argv){
 													  shigh, slow, seed);
 	} else {
 //		net = new NetworkGenerator::generate(numNodes, connectionProbability, minFund, maxFund, sendingFee,
-//			receivingFee, positiveSlope, negativeSlope, feePolicy, seed, averageNumSlopes);
+//		receivingFee, positiveSlope, negativeSlope, feePolicy, seed, averageNumSlopes);
 		std::cerr << "Not supported! " << endl;
 		exit(1);
 	}
 
 
 
-	NormalSizePoissonTimePaymentGenerator paymGen(net.getNumNodes(), numSources, numDestinations,
+	NormalSizePoissonTimePaymentGenerator paymGen(net->getNumNodes(), numSources, numDestinations,
 										  seed, meanSizePayments, variancePayments, intervalPayments);
 
 	double time;
 	double amount;
 	int src,dst;
 
-	double initFunds = net.totalFunds();
+	double initFunds = net->totalFunds();
 
 
 	do {
 
-		net.checkResidualFunds();
+		net->checkResidualFunds();
 
 		paymGen.getNext(amount,time,src,dst);
 
@@ -291,24 +288,26 @@ int main(int argc, char * * argv){
                 ( payMethod == PaymentMethod::SINGLEPATH || payMethod == PaymentMethod::MULTIPATH )) {
             
             
-            std::vector<std::vector<double>> flows(net.getNumNodes(), vector<double>(net.getNumNodes()));
+            std::vector<std::vector<double>> flows(net->getNumNodes(), vector<double>(net->getNumNodes()));
 			double fee=0;
             
-            pd = new PaymentDeployerExact(net.getNumNodes(), amount, src, dst);
+            pd = new PaymentDeployerExact(net->getNumNodes(), amount, src, dst);
 
-			for ( PaymentChannel * ch: net.getChannels()){
+			for ( PaymentChannel * ch: net->getChannels()){
 
                 /* add directional channel in one direction ... */
                 (dynamic_cast<PaymentDeployerExact *>(pd))->AddPaymentChannel(ch->getEndPointA()->getId(), ch->getEndPointB()->getId(),
                             ch->getResidualFundsA(),	ch->getResidualFundsB(), 
-							(dynamic_cast<PaymentChannelGeneralFees  *>(ch))->getPointsA(),
-							(dynamic_cast<PaymentChannelGeneralFees*> (ch))->getSlopesA());
+							ch->getBaseFee(),
+							ch->getPoints(),
+							ch->getSlopes());
                 
                 /* ... and the other */
                 (dynamic_cast<PaymentDeployerExact *>(pd))->AddPaymentChannel(ch->getEndPointB()->getId(), ch->getEndPointA()->getId(),
                             ch->getResidualFundsB(),ch->getResidualFundsA(), 
-                            (dynamic_cast<PaymentChannelGeneralFees  *>(ch))->getPointsB(),
-							dynamic_cast<PaymentChannelGeneralFees*>(ch)->getSlopesB());
+                            ch->getBaseFee(true),
+							ch->getPoints(true),
+							ch->getSlopes(true));
             }
         
                     
@@ -316,7 +315,7 @@ int main(int argc, char * * argv){
         
         pd->setAmount(amount);
 
-        std::vector<std::vector<double>> flows(net.getNumNodes(), vector<double>(net.getNumNodes()));
+        std::vector<std::vector<double>> flows(net->getNumNodes(), vector<double>(net->getNumNodes()));
 		double fee=0;
 
 		long transferredAmount=0;
@@ -324,7 +323,7 @@ int main(int argc, char * * argv){
 		if (pd->RunSolver(flows,fee)==0){
 					std::cout << "Success!\n";
 					totalFee+=fee;
-					net.makePayments(flows);
+					net->makePayments(flows);
 					stats.feesPaid+=totalFee;
 					transferredAmount+=amount;
         } else {
@@ -452,7 +451,7 @@ int main(int argc, char * * argv){
 	cout.precision(8);
 	stats.print();
 	std::cout << "Total funds at the beginning: " << initFunds << "\n";
-	std::cout << "Total funds at the end: " << net.totalFunds() << "\n";
+	std::cout << "Total funds at the end: " << net->totalFunds() << "\n";
 
 
 	return 0;

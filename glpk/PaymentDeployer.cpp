@@ -31,7 +31,7 @@ double PaymentDeployer::resFunds(int x,int y){
 /*
 int  PaymentDeployer::RunSolverOld(std::vector<std::vector<double>> & flow, double & totalFee) {
 
-		int i, j;
+		int i, jd;
 		char commandString[1024], solStatus[1024];
 
 		int nodeNum=numNodes;
