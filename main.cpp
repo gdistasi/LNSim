@@ -90,14 +90,15 @@ int main(int argc, char * * argv){
 	int numSources=3;
 	int numDestinations=3;
 	double connectionProbability=0.45;
-	double minFund=0.1;
-	double maxFund=10;
-	double sendingFee=0.000001;
+	double minFund=0.01;
+	double maxFund=0.167;
+	double sendingFee=0.00000001;
 	double receivingFee=0;
 	double positiveSlope=sendingFee;
 	double negativeSlope=sendingFee*0.01;
-	double slow=0.001;
-	double shigh=0.001;
+	double slow=0.00000001;
+	double shigh=0.00000002;
+	double baseFee=0.00000001;
 
 
 	int averageNumSlopes=3;
@@ -248,8 +249,9 @@ int main(int argc, char * * argv){
 
 
 	if (feePolicy = GENERAL_OPTIMIZED){
-		net = NetworkGenerator::generateOptimized(numNodes, connectionProbability, minFund, maxFund, sendingFee,
-													  shigh, slow, seed);
+		std::cout << "GENERATING...\n";
+		net = NetworkGenerator::generateOptimized(numNodes, connectionProbability, minFund * SATOSHI_IN_BTC, maxFund * SATOSHI_IN_BTC, sendingFee * SATOSHI_IN_BTC,
+													  shigh * SATOSHI_IN_BTC, slow * SATOSHI_IN_BTC, seed);
 	} else {
 //		net = new NetworkGenerator::generate(numNodes, connectionProbability, minFund, maxFund, sendingFee,
 //		receivingFee, positiveSlope, negativeSlope, feePolicy, seed, averageNumSlopes);
@@ -257,10 +259,11 @@ int main(int argc, char * * argv){
 		exit(1);
 	}
 
-
+	std::cout << "AAA" << net << "\n";
+	std::cerr << "Initial funds: " << net->totalFunds() << std::endl;
 
 	NormalSizePoissonTimePaymentGenerator paymGen(net->getNumNodes(), numSources, numDestinations,
-										  seed, meanSizePayments, variancePayments, intervalPayments);
+										  seed, meanSizePayments * SATOSHI_IN_BTC, variancePayments, intervalPayments);
 
 	double time;
 	double amount;
@@ -278,10 +281,8 @@ int main(int argc, char * * argv){
 		stats.payments+=1;
 		std::cout << "Processing next payment - amount: " << amount << " time: " << time << " Src: " << src << " Dst: " << dst << "\n";
 
-
 		double totalFee=0;
 
-		
         PaymentDeployer * pd;
         
         if (    resMethod==ResolutionMethod::EXACT &&
@@ -320,6 +321,8 @@ int main(int argc, char * * argv){
 
 		long transferredAmount=0;
 
+		std::cout << "QUI\n";
+
 		if (pd->RunSolver(flows,fee)==0){
 					std::cout << "Success!\n";
 					totalFee+=fee;
@@ -331,6 +334,7 @@ int main(int argc, char * * argv){
 					stats.unsuccess+=1;
                     break;
         }
+
 
         if (transferredAmount == amount)
 			stats.success+=1;
@@ -443,8 +447,6 @@ int main(int argc, char * * argv){
 			}
 		}
 */ 
-
-
 
 	} while (time<totalTime);
 

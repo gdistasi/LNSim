@@ -109,10 +109,16 @@ void LightningNetwork::readFromFile(char* filename) {
 	file.close();
 }
 
-double LightningNetwork::totalFunds() {
-	double ret=0;
+ln_units LightningNetwork::totalFunds() {
+
+	ln_units ret=0;
+
+	std::cout << "CHANNELS SIZE " << channels.size() << "\n";
+
 	for (PaymentChannel * ch: channels){
 		ret+=ch->getResidualFundsA()+ch->getResidualFundsB();
+		//std::cout << "CyCling" << channels.size() << "ret " << ret << "\n";
+		ch->dump();
 	}
 
 	return ret;

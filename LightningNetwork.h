@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <map>
+#include <iostream>
 
 #ifndef LIGHTNINGNETWORK_H_
 #define LIGHTNINGNETWORK_H_
@@ -32,13 +33,14 @@ public:
 
 	void checkResidualFunds() const;
 
-	double totalFunds();
+	ln_units totalFunds();
 
 	void setFeePolicy(enum FeeType feePolicy) {
 		this->feePolicy = feePolicy;
 	}
 
 	const std::vector<PaymentChannel*>& getChannels()  {
+		std::cout << "CHANNELs\n";
 		return channels;
 	}
 

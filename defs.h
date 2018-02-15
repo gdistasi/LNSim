@@ -5,8 +5,10 @@
 
 #define SATOSHI 1e-8
 #define MINIMUM_UNIT SATOSHI
+#define SATOSHI_IN_BTC 100000000
 
-/* smallest unit that can be held in a channel */
+
+/* smallest unit that can be held in a channel - satoshis at the moment */
 typedef unsigned long ln_units;
 
 typedef unsigned long millisatoshis;

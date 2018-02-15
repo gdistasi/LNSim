@@ -20,16 +20,17 @@ using namespace std;
 class PaymentDeployerExact: public PaymentDeployer {
 
 public:
-
 	PaymentDeployerExact(int numN, double P, int sourcet, int destinationt):PaymentDeployer(numN,P,sourcet,destinationt){};
+
 	void AddPaymentChannel(int A, int B, unsigned long resFundsA, unsigned long resFundsB, unsigned long baseFee, std::vector<long> sp, std::vector<unsigned long> cfs);
+
 	int  RunSolver(std::vector<std::vector<double>> & flow, double & totalFee);
 
 	void AddPaymentChannel(int A, int B, unsigned long resFundsA, unsigned long resFundsB, unsigned long baseFee, std::vector<unsigned long> sp, std::vector<unsigned long> cfs);
 
-	std::vector<unsigned long> getCoefficients(int x, int y){ return fees[pair<int,int>(x,y)].coefficients; }
-	std::vector<unsigned long> getPoints(int x, int y){ return fees[pair<int,int>(x,y)].starting_points; }
-	unsigned long getBaseFee(int x, int y){ return fees[pair<int,int>(x,y)].baseFee; }
+	std::vector<unsigned long> getCoefficients(int x, int y);
+	std::vector<unsigned long> getPoints(int x, int y);
+	unsigned long getBaseFee(int x, int y);
 
 	virtual ~PaymentDeployerExact(){}
 
@@ -48,7 +49,6 @@ public:
 	};
 
 protected:
-
 	std::map<std::pair<int,int>, PiecewiseLinearFee> fees;
 
 };

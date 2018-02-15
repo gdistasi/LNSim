@@ -5,7 +5,9 @@
  *      Author: giovanni
  */
 
-#include "PaymentDeployer.h"
+#include "PaymentDeployerExact.h"
+
+
 #include <stdlib.h>
 #include <math.h>
 
@@ -20,13 +22,51 @@
 #include <assert.h>
 
 
-#include "PaymentDeployerExact.h"
 
 using namespace std;
 
 
+std::vector<unsigned long> PaymentDeployerExact::getCoefficients(int x, int y){
+	std::pair<int,int> p = std::pair<int,int>(x,y);
+	std::vector<unsigned long> empty;
+
+	if (fees.find(p)!=fees.end()){
+		return fees[p].coefficients;
+	} else {
+		//std::cout << "RETURNING EMPTY\m";
+		return empty;
+	}
+}
+
+std::vector<unsigned long> PaymentDeployerExact::getPoints(int x, int y){
+	std::pair<int,int> p = std::pair<int,int>(x,y);
+	std::vector<unsigned long> empty;
+
+	if (fees.find(p)!=fees.end()){
+		return fees[p].starting_points;
+	} else {
+		return empty;
+	}
+
+}
+
+unsigned long PaymentDeployerExact::getBaseFee(int x, int y){
+	std::pair<int,int> p = std::pair<int,int>(x,y);
+
+	if (fees.find(p)!=fees.end()){
+		return fees[p].baseFee;
+	} else {
+		return 0;
+	}
+
+}
+
 void PaymentDeployerExact::AddPaymentChannel(int A, int B, unsigned long resFundsA, unsigned long resFundsB, unsigned long baseFee, std::vector<unsigned long> sp, std::vector<unsigned long> cfs){
+
 	fees.insert( std::pair< std::pair<int,int> , PiecewiseLinearFee > ( std::pair<int, int>(A,B), PiecewiseLinearFee(baseFee, sp, cfs) ) );
+	std::cout << "Adding payment channel between " << A << " and " << B << " with funds " << resFundsA << " and " << resFundsB << "\n";
+	channels.insert( std::pair< std::pair<int,int> , PaymentChannel > ( std::pair<int, int>(A,B), PaymentChannel(A,B, resFundsA, resFundsB) ));
+
 }
 
 
@@ -41,6 +81,11 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 		char * dataFile = tempnam(0, "DATA");
 		char * outputFile = tempnam(0, "OUT");
 		//char * clpModel = tempnam(0, "CLP");
+
+		std::cout << "Temp file " << outputFile << "\n";
+		std::cout << "Data file " << dataFile << "\n";
+
+
 
 		// open data file
 		FILE *fpDat = fopen(dataFile, "w");
@@ -70,7 +115,7 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 		for (i = 0; i < nodeNum; i++) {
 			fprintf(fpDat, "%d ", i);
 			for (j = 0; j < nodeNum; j++) {
-				fprintf(fpDat, "%.8lf ", resFunds(i,j));
+				fprintf(fpDat, "%lu ", resFunds(i,j));
 			}
 			fprintf(fpDat, "\n");
 		}
@@ -87,7 +132,7 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 		for (i = 0; i < nodeNum; i++) {
 			fprintf(fpDat, "%d ", i);
 			for (j = 0; j < nodeNum; j++) {
-				fprintf(fpDat, "%.8lf ", getBaseFee(i,j));
+				fprintf(fpDat, "%lu ", getBaseFee(i,j));
 			}
 			fprintf(fpDat, "\n");
 		}
@@ -112,13 +157,17 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 		// residual funds constraints
 		fprintf(fpDat, "param sendingFeeRates :=\n");
 		for (i = 0; i < nodeNum; i++) {
-			for (j = 0; j < nodeNum; i++) {
+			for (j = 0; j < nodeNum; j++) {
 				fprintf(fpDat, "[%d,%d,*] ", i,j);
 				for (int p=1; p <= getCoefficients(i,j).size(); p++){
-					fprintf(fpDat, " %d %.8lf   ", p, getCoefficients(i,j)[p-1]);
+					fprintf(fpDat, " %lu %lu  ", p, getCoefficients(i,j)[p-1]);
+
+					std::cout << getCoefficients(i,j)[p-1];
+
 				}
 			}
 		}
+
 
 
 		fprintf(fpDat, " ;\n");
@@ -126,15 +175,15 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 		// residual funds constraints
 		fprintf(fpDat, "param sendingFeeLimits :=\n");
 		for (i = 0; i < nodeNum; i++) {
-			for (j = 0; j < nodeNum; i++) {
+			for (j = 0; j < nodeNum; j++) {
 				fprintf(fpDat, "[%d,%d,*] ", i,j);
 				for (int p=1; p <= getPoints(i,j).size(); p++){
-					fprintf(fpDat, " %d %d   ", p, getPoints(i,j)[p-1]);
+					fprintf(fpDat, " %lu %lu ", p, getPoints(i,j)[p-1]);
+				}
 			}
 		}
-				}
 
-				fprintf(fpDat, " ;\n");
+		fprintf(fpDat, " ;\n");
 
 
 	/*	// residual funds constraints
@@ -153,17 +202,15 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 				fprintf(fpDat, "\n");
 			}
 			fprintf(fpDat, ";\n\n");
-
 */
 
 		fprintf(fpDat, "param source := %d;\n\n", source);
 		fprintf(fpDat, "param destination := %d;\n\n", destination);
-		fprintf(fpDat, "param P := %.8lf;\n\n", payment);
+		fprintf(fpDat, "param P := %d;\n\n", payment);
 
 		fprintf(fpDat, "end;\n\n");
 
 		fclose(fpDat);
-
 
 		sprintf(commandString, "glpsol --model %s --data %s -w %s",
 						(modelsDirectory+string("/ModelExact")).c_str(), dataFile, outputFile);
@@ -214,7 +261,6 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 		fscanf(fpOut, "%s", solStatus);
 
 
-
 		// LP minimized value
 		totalFee = atof(solStatus);
 
@@ -238,14 +284,14 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 
 					flow[i][j]=fVal;
 					fprintf(stdout, "flow[%d,%d]=%.10lf\n",i,j, flow[i][j]);
-
 					//std::cout << "flow["<<i<<","<<j<<"]="<<flow[i][j]<<  "\n";
+
 				} else {
 					flow[i][j]=0;
 				}
 				fscanf(fpOut, "%s", solStatus);
 
-			}
+		}
 
 		fclose(fpOut);
 		cout << "Finished parsing.\n";

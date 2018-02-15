@@ -23,8 +23,8 @@ using namespace std;
 
 
 double PaymentDeployer::resFunds(int x,int y){
-	/* we suppose the payment channels are added following the node id order - HACK */
-	return channels.find(pair<int,int>(x,y))->second.resFundsA;
+	//std::cout << "FINDING " << channels.find( pair<int,int>(x,y))->second.resFundsA  ;
+	return channels.find( pair<int,int>(x,y) )->second.resFundsA;
 }
 
 

@@ -31,9 +31,16 @@ LightningNetwork * NetworkGenerator::generateOptimized(int numNodes, double conn
 
 	LightningNetwork * net= NetworkGenerator::generateBase(numNodes, connectionProbability, minFund, maxFund, seed);
 
+	std::cout << net << "\n";
+
+	//std::cerr << "Num channels " << net->getChannels().size() << "\n";
+
 	for (PaymentChannel * ch: net->getChannels()){
 		ch->setFeeCalculator(new FeeCalculatorOptimized(baseSendingFee_inMilliSatoshi, slow,shigh));
 	}
+
+
+	return net;
 
 }
 
@@ -50,13 +57,13 @@ LightningNetwork * NetworkGenerator::generate(int numNodes, double connProb,
 
 			LightningNetwork * net= new LightningNetwork();
 
+			std::cout << net << " ALL inizio \n";
+
 			for (int i=0; i<numNodes; i++){
 					PaymentChannelEndPoint * n=new PaymentChannelEndPoint();
 					net->nodes.push_back(n);
 					n->setId(i);
 			}
-
-
 
 			std::default_random_engine generator(seed);
 			std::uniform_real_distribution<double> dist(0,1);
@@ -184,13 +191,14 @@ bool isConnected(LightningNetwork & net){
 
 
 LightningNetwork * NetworkGenerator::generateBase(int numNodes, double connProb, double minFund, double maxFund, double seed){
-	LightningNetwork * net= new LightningNetwork();
+		LightningNetwork * net= new LightningNetwork();
 
 		for (int i=0; i<numNodes; i++){
 				PaymentChannelEndPoint * n=new PaymentChannelEndPoint();
 				net->nodes.push_back(n);
 				n->setId(i);
 		}
+
 
 
 		std::default_random_engine generator(seed);
@@ -212,8 +220,12 @@ LightningNetwork * NetworkGenerator::generateBase(int numNodes, double connProb,
 							net->channels.push_back(pc);
 							net->mapCh.insert(std::map<std::pair<PaymentChannelEndPoint *,PaymentChannelEndPoint *>,PaymentChannel *>::value_type(
 							std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(net->nodes[i],net->nodes[j]),pc));
+
+							pc->dump();
 						}
 
 		}
+
+		return net;
 }
 

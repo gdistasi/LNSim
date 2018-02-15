@@ -34,14 +34,14 @@ public:
 	class PaymentChannel {
 
 			public:
-				PaymentChannel(int At,int Bt, double resFundsAt, double resFundsBt):
+				PaymentChannel(int At,int Bt, unsigned long resFundsAt, unsigned long resFundsBt):
 					A(At),B(Bt),resFundsA(resFundsAt),resFundsB(resFundsBt){}
 
 					//id of the endpoints
 					int A,B;
 
 					//residual funds of endpoints
-					double resFundsA, resFundsB;
+					unsigned long resFundsA, resFundsB;
 	};
 
 
