@@ -60,8 +60,6 @@ s.t. sos2c2{a in N, b in N: r[a,b]>0}:
 	sum{i in 1..sendingFeeNumRegions[a,b]+1} ya[a,b,i] <= 2;
 	
 
-
-
 param source in N;
 /* source */
 
