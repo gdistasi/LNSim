@@ -22,7 +22,6 @@
 #include <assert.h>
 
 
-
 using namespace std;
 
 
@@ -158,6 +157,8 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 		fprintf(fpDat, "param sendingFeeRates :=\n");
 		for (i = 0; i < nodeNum; i++) {
 			for (j = 0; j < nodeNum; j++) {
+				if (resFunds(i,j)== 0 ) continue;
+
 				fprintf(fpDat, "[%d,%d,*] ", i,j);
 				for (int p=1; p <= getCoefficients(i,j).size(); p++){
 					fprintf(fpDat, " %lu %lu  ", p, getCoefficients(i,j)[p-1]);
@@ -170,15 +171,17 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 
 
 
-		fprintf(fpDat, " ;\n");
+		fprintf(fpDat, " ;\n\n");
 
 		// residual funds constraints
 		fprintf(fpDat, "param sendingFeeLimits :=\n");
 		for (i = 0; i < nodeNum; i++) {
 			for (j = 0; j < nodeNum; j++) {
+				if (resFunds(i,j)==0 ) continue;
+
 				fprintf(fpDat, "[%d,%d,*] ", i,j);
-				for (int p=1; p <= getPoints(i,j).size(); p++){
-					fprintf(fpDat, " %lu %lu ", p, getPoints(i,j)[p-1]);
+				for (int p=0; p < getPoints(i,j).size(); p++){
+					fprintf(fpDat, " %lu %lu ", p, getPoints(i,j)[p]);
 				}
 			}
 		}
@@ -204,7 +207,7 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 			fprintf(fpDat, ";\n\n");
 */
 
-		fprintf(fpDat, "param source := %d;\n\n", source);
+		fprintf(fpDat, "\nparam source := %d;\n\n", source);
 		fprintf(fpDat, "param destination := %d;\n\n", destination);
 		fprintf(fpDat, "param P := %d;\n\n", payment);
 

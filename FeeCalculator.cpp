@@ -33,9 +33,13 @@ std::vector<unsigned long> FeeCalculatorOptimized::getPoints(ln_units resFundsA,
 
 	std::vector<unsigned long> points;
 
+	points.push_back(0);
+
 	if (resFundsA > resFundsB){
 		points.push_back(resFundsA-resFundsB);
 	}
+
+	points.push_back(resFundsA);
 
 	return points;
 }

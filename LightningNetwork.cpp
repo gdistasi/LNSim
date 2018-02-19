@@ -113,11 +113,9 @@ ln_units LightningNetwork::totalFunds() {
 
 	ln_units ret=0;
 
-	std::cout << "CHANNELS SIZE " << channels.size() << "\n";
-
 	for (PaymentChannel * ch: channels){
 		ret+=ch->getResidualFundsA()+ch->getResidualFundsB();
-		//std::cout << "CyCling" << channels.size() << "ret " << ret << "\n";
+		//std::cout << "CyCling" << channels.() << "ret " << ret << "\n";
 		ch->dump();
 	}
 

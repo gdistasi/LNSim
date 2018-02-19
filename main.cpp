@@ -86,10 +86,10 @@ int main(int argc, char * * argv){
 	double variancePayments=0.1;
 	double intervalPayments=1;
 	double totalTime=60; //one day
-	double numNodes=10;
-	int numSources=3;
-	int numDestinations=3;
-	double connectionProbability=0.45;
+	double numNodes=2;
+	int numSources=1;
+	int numDestinations=1;
+	double connectionProbability=1;
 	double minFund=0.01;
 	double maxFund=0.167;
 	double sendingFee=0.00000001;
@@ -99,7 +99,6 @@ int main(int argc, char * * argv){
 	double slow=0.00000001;
 	double shigh=0.00000002;
 	double baseFee=0.00000001;
-
 
 	int averageNumSlopes=3;
     
@@ -247,9 +246,10 @@ int main(int argc, char * * argv){
 	Stats stats;
 	LightningNetwork * net=0;
 
+	std::cerr << "Generating network...\n";
+
 
 	if (feePolicy = GENERAL_OPTIMIZED){
-		std::cout << "GENERATING...\n";
 		net = NetworkGenerator::generateOptimized(numNodes, connectionProbability, minFund * SATOSHI_IN_BTC, maxFund * SATOSHI_IN_BTC, sendingFee * SATOSHI_IN_BTC,
 													  shigh * SATOSHI_IN_BTC, slow * SATOSHI_IN_BTC, seed);
 	} else {
@@ -259,7 +259,8 @@ int main(int argc, char * * argv){
 		exit(1);
 	}
 
-	std::cout << "AAA" << net << "\n";
+	std::cerr << "Done.\n";
+
 	std::cerr << "Initial funds: " << net->totalFunds() << std::endl;
 
 	NormalSizePoissonTimePaymentGenerator paymGen(net->getNumNodes(), numSources, numDestinations,
@@ -276,10 +277,11 @@ int main(int argc, char * * argv){
 
 		net->checkResidualFunds();
 
+		std::cerr << "Generating next payment...";
 		paymGen.getNext(amount,time,src,dst);
 
 		stats.payments+=1;
-		std::cout << "Processing next payment - amount: " << amount << " time: " << time << " Src: " << src << " Dst: " << dst << "\n";
+		std::cerr << "Processing next payment - amount: " << amount << " time: " << time << " Src: " << src << " Dst: " << dst << "\n";
 
 		double totalFee=0;
 

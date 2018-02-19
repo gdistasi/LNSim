@@ -31,8 +31,6 @@ LightningNetwork * NetworkGenerator::generateOptimized(int numNodes, double conn
 
 	LightningNetwork * net= NetworkGenerator::generateBase(numNodes, connectionProbability, minFund, maxFund, seed);
 
-	std::cout << net << "\n";
-
 	//std::cerr << "Num channels " << net->getChannels().size() << "\n";
 
 	for (PaymentChannel * ch: net->getChannels()){
@@ -56,8 +54,6 @@ LightningNetwork * NetworkGenerator::generate(int numNodes, double connProb,
 
 
 			LightningNetwork * net= new LightningNetwork();
-
-			std::cout << net << " ALL inizio \n";
 
 			for (int i=0; i<numNodes; i++){
 					PaymentChannelEndPoint * n=new PaymentChannelEndPoint();
