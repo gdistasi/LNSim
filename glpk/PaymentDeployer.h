@@ -29,7 +29,7 @@ public:
     virtual int  RunSolver(std::vector<std::vector<double>> & flow, double & totalFee)=0;
 	virtual int  RunSolverOld(std::vector<std::vector<double>> & flow, double & totalFee){};
     
-	double resFunds(int x,int y);
+	unsigned long resFunds(int x,int y);
 
 	class PaymentChannel {
 

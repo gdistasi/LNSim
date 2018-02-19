@@ -66,6 +66,7 @@ PaymentChannel::~PaymentChannel(){
 
 void PaymentChannel::dump(){
 
+	std::cerr <<"Payment channel dump. ";
 	std::cerr << "End points: " << A->getId() << " " << B->getId() << "\n";
 	std::cerr << "ResidualFundsA " << residualFundsA << "; ResidualFundsB " << residualFundsB << "\n";
 

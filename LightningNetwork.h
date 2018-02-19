@@ -40,7 +40,6 @@ public:
 	}
 
 	const std::vector<PaymentChannel*>& getChannels()  {
-		std::cout << "CHANNELs\n";
 		return channels;
 	}
 

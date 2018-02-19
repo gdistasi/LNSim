@@ -11,7 +11,7 @@ OBJS += glpk/PaymentDeployerExact.o
 ALL: LNSimulator
 
 clean:
-	rm -f *.o LNSim
+	rm -f *.o glpk/*.o LNSim
 
 %.o: %.cpp
 	$(GPP) $(CPPOPTS) -c $< -o $@ 
