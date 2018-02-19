@@ -13,8 +13,6 @@
  NormalSizePoissonTimePaymentGenerator::~NormalSizePoissonTimePaymentGenerator() {
 	delete size_dist;
 	delete time_dist;
-	delete src_dist;
-	delete dst_dist;
 }
 
 void NormalSizePoissonTimePaymentGenerator::getNext(double& amount,
@@ -32,12 +30,12 @@ void NormalSizePoissonTimePaymentGenerator::getNext(double& amount,
 
 	 amount=mytrunc(amount);
 
-	 source = src_dist->operator() (generator);
+	 source = node_dist->operator() (generator);
 
 	 destination=source;
 
 	 while (source==destination){
-		 destination = dst_dist->operator() (generator);
+		 destination = node_dist->operator() (generator);
 	 }
 
 }

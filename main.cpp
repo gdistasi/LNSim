@@ -82,7 +82,7 @@ public:
 int main(int argc, char * * argv){
 
 	int seed=0.1;
-	double meanSizePayments=1;
+	double meanSizePayments=0.001;
 	double variancePayments=0.1;
 	double intervalPayments=1;
 	double totalTime=60; //one day
