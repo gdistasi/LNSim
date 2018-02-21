@@ -27,12 +27,15 @@ param sendingFeeLimits { a in N, b in N, p in 0..sendingFeeNumRegions[a,b]: r[a,
 /* sendingFeeRates */
 param sendingFeeRates{ x in N, y in N, p in 1..sendingFeeNumRegions[x,y]: r[x,y]>0 } >= if p = 1 then 0 else sendingFeeRates[x,y,p-1];
 
-/* http://homepages.rpi.edu/~mitchj/handouts/piecewise/ */
+/* 
+http://homepages.rpi.edu/~mitchj/handouts/piecewise/ 
+https://orinanobworld.blogspot.it/2010/10/piecewise-linear-functions-in-math.html
+*/
 
 var xa{a in N, b in N, p in 1..sendingFeeNumRegions[a,b]+1} >= 0;
 
 s.t. xa_constraint{a in N, b in N: r[a,b]>0}: 
-	sum{p in 0..sendingFeeNumRegions[a,b]} ( sendingFeeLimits[a,b,1] * xa[a,b,p+1] ) = flow[a,b];
+	sum{p in 0..sendingFeeNumRegions[a,b]} ( sendingFeeLimits[a,b,p] * xa[a,b,p+1] ) = flow[a,b];
 
 s.t. xa_constraint2{a in N, b in N: r[a,b]>0}:
 	sum{p in 1..sendingFeeNumRegions[a,b]+1} xa[a,b,p]=1;	
@@ -41,11 +44,15 @@ s.t. xa_constraint2{a in N, b in N: r[a,b]>0}:
 var fee{a in N, b in N} >= 0;
 
 s.t. fee_constraint{a in N, b in N: r[a,b]>0}:
-	fee[a,b] = sum{p in 0..sendingFeeNumRegions[a,b]} ( 
-		xa[a,b,p+1] * ( 
+	fee[a,b] = sum{p in 0..sendingFeeNumRegions[a,b]-1} ( 
+		
+		baseSendingFee[a,b] + 
+		
+		xa[a,b,p+2] * ( 
 			baseSendingFee[a,b] + 
 			sum {k in 0..p-1} (( sendingFeeLimits[a,b,k+1] - sendingFeeLimits[a,b,k] ) * sendingFeeRates[a,b,k+1] )
 		)
+		
 	);
 	
 var ya{a in N, b in N, p in 1..sendingFeeNumRegions[a,b]+1} binary;
