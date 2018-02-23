@@ -47,9 +47,16 @@ public:
 		return nodes;
 	}
 
-	void makePayments(std::vector<std::vector<double>> );
+	void makePayments(std::vector<std::vector<ln_units>> );
+
+	void addPaymentChannel(PaymentChannel * pc, int idA, int idB);
+	PaymentChannel * getChannel(int idA, int idB);
+
 
 	friend class NetworkGenerator;
+	friend class NetworkGeneratorFromFile;
+
+
 
 protected:
 

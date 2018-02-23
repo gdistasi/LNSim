@@ -17,7 +17,6 @@
 
 
 
-/*These are directional channels. A LN channel becomes two of these */  
 class PaymentChannel {
 public:
 	PaymentChannel(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, ln_units resFundsA, ln_units resFundsB);
@@ -46,8 +45,8 @@ public:
 	PaymentChannelEndPoint * getEndPointB() const { return B; }
 
 
-	void PayA(double P);
-	void PayB(double P);
+	void PayA(ln_units P);
+	void PayB(ln_units P);
 
 	void dump();
 

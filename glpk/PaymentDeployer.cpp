@@ -24,9 +24,10 @@ using namespace std;
 
 unsigned long PaymentDeployer::resFunds(int x,int y){
 	//std::cout << "FINDING " << channels.find( pair<int,int>(x,y))->second.resFundsA  ;
-	std::cout << "ResFunds " << x << " y " << y << " " << channels.find( pair<int,int>(x,y) )->second.resFundsA << "\n";
 
-	return channels.find( pair<int,int>(x,y) )->second.resFundsA;
+	if (channels.find( pair<int,int>(x,y)) == channels.end()) return 0;
+	//std::cout << "ResFunds " << x << " y " << y << " " << channels.find( pair<int,int>(x,y) )->second.resFundsA << "\n";
+	else return channels.find( pair<int,int>(x,y) )->second.resFundsA;
 }
 
 

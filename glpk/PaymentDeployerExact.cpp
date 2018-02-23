@@ -16,10 +16,21 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <sstream>
 
 #include <string.h>
 
 #include <assert.h>
+
+#include<iostream>
+#include<string>
+#include <fstream>
+
+#include "../utils.h"
+
+#include <regex>
+
+#include "../defs.h"
 
 
 using namespace std;
@@ -63,14 +74,14 @@ unsigned long PaymentDeployerExact::getBaseFee(int x, int y){
 void PaymentDeployerExact::AddPaymentChannel(int A, int B, unsigned long resFundsA, unsigned long resFundsB, unsigned long baseFee, std::vector<unsigned long> sp, std::vector<unsigned long> cfs){
 
 	fees.insert( std::pair< std::pair<int,int> , PiecewiseLinearFee > ( std::pair<int, int>(A,B), PiecewiseLinearFee(baseFee, sp, cfs) ) );
-	std::cout << "Adding payment channel between " << A << " and " << B << " with funds " << resFundsA << " and " << resFundsB << "\n";
+	std::cout << "AAA--Adding payment channel between " << A << " and " << B << " with funds " << resFundsA << " and " << resFundsB << "\n";
 	channels.insert( std::pair< std::pair<int,int> , PaymentChannel > ( std::pair<int, int>(A,B), PaymentChannel(A,B, resFundsA, resFundsB) ));
 
 }
 
 
 
-int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow, double & totalFee) {
+int  PaymentDeployerExact::RunSolver( std::vector< std::vector<long> > & flow, long & totalFee) {
 
 		int i, j;
 		char commandString[1024], solStatus[1024];
@@ -153,8 +164,8 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 		}
 		fprintf(fpDat, ";\n\n");
 
-		// residual funds constraints
-		fprintf(fpDat, "param sendingFeeRates :=\n");
+		// residual funds constraints - not really used for solving, just for debugging
+		/*fprintf(fpDat, "param sendingFeeRates :=\n");
 		for (i = 0; i < nodeNum; i++) {
 			for (j = 0; j < nodeNum; j++) {
 				if (resFunds(i,j)== 0 ) continue;
@@ -167,8 +178,36 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 
 				}
 			}
-		}
+		}*/
 
+
+		// Sending fee value at the limit points (only the piecewise part, i.e. y(0)=0)
+		fprintf(fpDat, "\n\nparam yy :=\n");
+				for (i = 0; i < nodeNum; i++) {
+					for (j = 0; j < nodeNum; j++) {
+						if (resFunds(i,j)== 0 ) continue;
+
+						fprintf(fpDat, "[%d,%d,*] ", i,j);
+						fprintf(fpDat, " %lu %lu  ", 1, 0);
+
+						long fee=0;
+
+						for (int p=2; p <= getPoints(i,j).size(); p++){
+
+							/* getCoefficients specify the amount of millisatoshis to pay for each satoshi transferred */
+							std::cout << "\nPp-1 " << getPoints(i,j)[p-1] << " Pp-2 " << getPoints(i,j)[p-2] << " Coeff-p " << getPoints(i,j)[p-2] << "\n";
+
+							fee = ((getPoints(i,j)[p-1] - getPoints(i,j)[p-2])) * getCoefficients(i,j)[p-2] / 1000;
+
+							std::cout << "fee " << fee << "\n";
+
+							fprintf(fpDat, " %lu %lu  ", p, fee);
+
+							std::cout << getCoefficients(i,j)[p-1];
+
+						}
+					}
+				}
 
 
 		fprintf(fpDat, " ;\n\n");
@@ -215,7 +254,7 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 
 		fclose(fpDat);
 
-		sprintf(commandString, "glpsol --model %s --data %s -w %s",
+		sprintf(commandString, "glpsol --model %s --data %s -o %s",
 						(modelsDirectory+string("/ModelExact")).c_str(), dataFile, outputFile);
 		cout << commandString << endl;
 	//	::system(commandString);
@@ -229,7 +268,7 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 
 		std::cout << res;
 
-		std::size_t found=res.find("OPTIMAL LP SOLUTION FOUND");
+		std::size_t found=res.find("SOLUTION FOUND");
 		if (found==std::string::npos){
 				return PAYMENT_FAILED;
 		}
@@ -237,66 +276,81 @@ int  PaymentDeployerExact::RunSolver( std::vector< std::vector<double> > & flow,
 		cout << "Opening output file...\n";
 		// open output file
 
-		FILE *fpOut = fopen(outputFile, "r");
-		if (fpOut == NULL) {
+		ifstream fpOut (outputFile);
+
+		if (fpOut.is_open() == false) {
 			cout << "failed to open file: " << outputFile << endl;
 			return COULD_NOT_OPEN_OUTPUT_FILE;
 		}
 
+		string line;
+
 		int rows;
 		int columns;
 
-		fscanf(fpOut, "%s", solStatus);
-		std::cout << solStatus << "\n";
-		rows=atoi(solStatus);
 
-		fscanf(fpOut, "%s", solStatus);
-		std::cout << solStatus << "\n";
+	    getline (fpOut,line);
+	    getline (fpOut,line);
 
-		columns=atoi(solStatus);
+		rows=convertTo(tokenize(line)[1]);
 
-		std::cout << columns << "COL\n";
+	    getline (fpOut,line);
 
-		assert(columns==numNodes*numNodes);
+		columns=convertTo(tokenize(line)[1]);
 
-		fscanf(fpOut, "%s", solStatus);
-		fscanf(fpOut, "%s", solStatus);
-		fscanf(fpOut, "%s", solStatus);
+	    //cout << "COLUMNS " << columns << "\n";
+		//cout << "RW " << rows << "\n";
 
+		//assert(columns==numNodes*numNodes);
 
-		// LP minimized value
-		totalFee = atof(solStatus);
+		//fscanf(fpOut, "%s", solStatus);
+		//fscanf(fpOut, "%s", solStatus);
+		//fscanf(fpOut, "%s", solStatus);
+
+		getline (fpOut,line);
+
+		getline (fpOut,line);
+
+		getline (fpOut,line);
+
+		totalFee = convertTo(tokenize(line)[3]) - payment;
 
 		std::cout<<"Total fees " << totalFee << "\n";
 
-
-		for (int i=0; i<rows-1; i++){
-			fscanf(fpOut, "%*[^\n]\n", NULL);
+		//go to the solutions
+		found=line.find("Column name");
+		while (found==std::string::npos){
+			getline (fpOut,line);
+			found=line.find("Column name");
 		}
+		getline (fpOut,line);
 
-		double fVal;
+
+		long fVal;
 
 		for (int i=0; i<numNodes; i++)
 			for (int j=0; j<numNodes; j++){
-				fscanf(fpOut, "%s", solStatus);
-				fscanf(fpOut, "%s", solStatus);
 
-				fVal=atof(solStatus);
+				getline(fpOut, line);
 
-				if (fabs(fVal)>EPSILON){
+				//std::cout << "LINE WITH SOLUTIONS " << line << "\n";
+
+				fVal=convertTo(tokenize(line)[3]);
+
+				//if (fabs(fVal)>EPSILON){
 
 					flow[i][j]=fVal;
-					fprintf(stdout, "flow[%d,%d]=%.10lf\n",i,j, flow[i][j]);
+					fprintf(stdout, "flow[%d,%d]=%lu\n",i,j, flow[i][j]);
 					//std::cout << "flow["<<i<<","<<j<<"]="<<flow[i][j]<<  "\n";
 
-				} else {
-					flow[i][j]=0;
-				}
-				fscanf(fpOut, "%s", solStatus);
+				//} else {
+				////	flow[i][j]=0;
+				//}
+				//fscanf(fpOut, "%s", solStatus);
 
 		}
 
-		fclose(fpOut);
+		fpOut.close();
 		cout << "Finished parsing.\n";
 
 		return 0;

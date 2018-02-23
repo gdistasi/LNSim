@@ -24,9 +24,10 @@ public:
 		numNodes(numN),payment(P),source(sourcet),destination(destinationt){};
 
 
-    void setAmount(double am){ payment=am; }
+    void setAmount(long am){ payment=am; }
     
-    virtual int  RunSolver(std::vector<std::vector<double>> & flow, double & totalFee)=0;
+    virtual int  RunSolver( std::vector< std::vector<long> > & flow, long & totalFee) = 0;
+
 	virtual int  RunSolverOld(std::vector<std::vector<double>> & flow, double & totalFee){};
     
 	unsigned long resFunds(int x,int y);
@@ -34,14 +35,14 @@ public:
 	class PaymentChannel {
 
 			public:
-				PaymentChannel(int At,int Bt, unsigned long resFundsAt, unsigned long resFundsBt):
+				PaymentChannel(int At,int Bt, long resFundsAt, long resFundsBt):
 					A(At),B(Bt),resFundsA(resFundsAt),resFundsB(resFundsBt){}
 
 					//id of the endpoints
 					int A,B;
 
 					//residual funds of endpoints
-					unsigned long resFundsA, resFundsB;
+					long resFundsA, resFundsB;
 	};
 
 

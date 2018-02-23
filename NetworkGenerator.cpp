@@ -11,7 +11,13 @@
 
 #include <iostream>
 #include <random>
+#include <fstream>
+#include <stdlib.h>
+#include <math.h>
 
+#include <cstdio>
+
+#include  "utils.h"
 
 NetworkGenerator::NetworkGenerator() {
 	// TODO Auto-generated constructor stub
@@ -24,12 +30,11 @@ NetworkGenerator::~NetworkGenerator() {
 
 
 
-LightningNetwork * NetworkGenerator::generateOptimized(int numNodes, double connectionProbability,
-													   double minFund, double maxFund,
+LightningNetwork * NetworkGenerator::generateOptimizedFee(LightningNetwork * baseNet,
 													   long baseSendingFee_inMilliSatoshi,
 													   double shigh, double slow, double seed){
 
-	LightningNetwork * net= NetworkGenerator::generateBase(numNodes, connectionProbability, minFund, maxFund, seed);
+	LightningNetwork * net = baseNet;
 
 	//std::cerr << "Num channels " << net->getChannels().size() << "\n";
 
@@ -185,8 +190,8 @@ bool isConnected(LightningNetwork & net){
 
 
 
-
 LightningNetwork * NetworkGenerator::generateBase(int numNodes, double connProb, double minFund, double maxFund, double seed){
+
 		LightningNetwork * net= new LightningNetwork();
 
 		for (int i=0; i<numNodes; i++){
@@ -194,8 +199,6 @@ LightningNetwork * NetworkGenerator::generateBase(int numNodes, double connProb,
 				net->nodes.push_back(n);
 				n->setId(i);
 		}
-
-
 
 		std::default_random_engine generator(seed);
 		std::uniform_real_distribution<double> dist(0,1);
@@ -213,15 +216,59 @@ LightningNetwork * NetworkGenerator::generateBase(int numNodes, double connProb,
 							pc = new PaymentChannel(net->nodes[i], net->nodes[j],
 																mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)));
 
-							net->channels.push_back(pc);
-							net->mapCh.insert(std::map<std::pair<PaymentChannelEndPoint *,PaymentChannelEndPoint *>,PaymentChannel *>::value_type(
-							std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(net->nodes[i],net->nodes[j]),pc));
-
+							net->addPaymentChannel(pc, i, j);
 							pc->dump();
 						}
 
 		}
 
 		return net;
+}
+
+
+
+
+LightningNetwork *  NetworkGenerator::generateBaseFromFile(string filename){
+
+	LightningNetwork * net = new LightningNetwork();
+
+	ifstream fpOut (filename);
+
+	if (!fpOut.is_open()) {
+		cout << "failed to open file: " << filename << endl;
+		exit(1);
+	}
+
+	string line;
+
+	getline (fpOut,line);
+
+	int numNodes=convertTo(line);
+
+	for (int i=0; i<numNodes; i++){
+				PaymentChannelEndPoint * n=new PaymentChannelEndPoint();
+				net->nodes.push_back(n);
+				n->setId(i);
+	}
+
+
+	int from,to;
+	long capA,capB;
+
+	while (	getline (fpOut,line)){
+		from = convertTo ( tokenize(line)[0]  );
+		to = convertTo( tokenize(line)[1]  );
+		capA = convertTo( tokenize(line)[2]  );
+		capB = convertTo( tokenize(line)[3]  );
+
+		PaymentChannel * pc = new PaymentChannel(net->nodes[from], net->nodes[to],capA, capB);
+
+		net->addPaymentChannel(pc, from, to);
+
+	}
+
+
+	return net;
+
 }
 

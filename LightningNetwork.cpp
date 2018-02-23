@@ -24,7 +24,15 @@ LightningNetwork::LightningNetwork() {
 }
 
 LightningNetwork::~LightningNetwork() {
-	// TODO Auto-generated destructor stub
+
+	for (auto p: channels){
+		delete p;
+	}
+
+	for (auto p: nodes){
+		delete p;
+	}
+
 }
 
 void LightningNetwork::readFromFile(char* filename) {
@@ -146,24 +154,59 @@ void LightningNetwork::checkResidualFunds() const {
 
 }
 
-void LightningNetwork::makePayments(std::vector<std::vector<double>> payments) {
+void LightningNetwork::makePayments(std::vector<std::vector<ln_units> > payments) {
+	std::cout << "PRE PAYINGGGGG \n";
 
-	for (int i=0; i<getNumNodes(); i++)
+	for (int i=0; i<getNumNodes(); i++){
 		for (int j=0; j<getNumNodes(); j++){
-			if (i==j || payments[i][j]==0.0) continue;
-			PaymentChannel * ch;
+			if (i==j || payments[i][j]==0) continue;
+
+
+			//std::cout << "PAYINGGGGG \n";
+
+			std::cout << "i: " << i << " j: " << j << "\n";
+			PaymentChannel * ch = getChannel(i,j);
+
 			if (i<j){
-				if ( mapCh.find(std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(nodes[i],nodes[j]))!=mapCh.end()){
-					ch = mapCh[std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(nodes[i],nodes[j])];
 					ch->PayB(payments[i][j]);
-				} else assert(payments[i][j]==0);
-			} else {
-				if ( mapCh.find(std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(nodes[j],nodes[i]))!=mapCh.end()){
-					ch = mapCh[std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(nodes[j],nodes[i])];
+			}	else {
 					ch->PayA(payments[i][j]);
-				}else assert(payments[i][j]==0);
-
 			}
-
 		}
+	}
 }
+
+
+
+PaymentChannel * LightningNetwork::getChannel(int i, int j){
+	PaymentChannel * pc=0;
+
+	if (i<j){
+		if ( mapCh.find(std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(nodes[i],nodes[j]))!=mapCh.end()){
+			pc = mapCh[std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(nodes[i],nodes[j])];
+		}
+	} else {
+		if ( mapCh.find(std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(nodes[j],nodes[i]))!=mapCh.end()){
+			pc = mapCh[std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(nodes[j],nodes[i])];
+		}
+	}
+
+	return pc;
+}
+
+void LightningNetwork::addPaymentChannel(PaymentChannel * pc, int idA, int idB){
+
+	this->channels.push_back(pc);
+
+	//std::cout << "Adding payment channel " << idA << " " << idB << "\n";
+
+	if (idA<idB){
+			mapCh.insert(std::map<std::pair<PaymentChannelEndPoint *,PaymentChannelEndPoint *>,PaymentChannel *>::value_type(
+			std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(nodes[idA],nodes[idB]),pc));
+	} else {
+			mapCh.insert(std::map<std::pair<PaymentChannelEndPoint *,PaymentChannelEndPoint *>,PaymentChannel *>::value_type(
+			std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(nodes[idB],nodes[idA]),pc));
+	}
+}
+
+

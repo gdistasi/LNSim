@@ -32,11 +32,11 @@ double findSmallestImbalance(std::vector<PaymentChannel *> channels){
 
 }
 
-void checkPayment(std::vector<std::vector<double>> flows, double pay, double fee, int src, int dst){
+void checkPayment(std::vector<std::vector<ln_units>> flows, ln_units pay, ln_units fee, int src, int dst){
 
 	std::cout << "Checking payment...\n";
 
-	double out=0,in=0;
+	ln_units out=0,in=0;
 
 	for (int i=0; i<(int)flows.size(); i++){
 		out+=mytrunc(flows[src][i]);
@@ -82,23 +82,28 @@ public:
 int main(int argc, char * * argv){
 
 	int seed=0.1;
-	double meanSizePayments=0.001;
+	ln_units meanSizePayments=1000;
 	double variancePayments=0.1;
 	double intervalPayments=1;
 	double totalTime=60; //one day
-	double numNodes=2;
+	int numNodes=2;
 	int numSources=1;
 	int numDestinations=1;
 	double connectionProbability=1;
-	double minFund=0.01;
-	double maxFund=0.167;
-	double sendingFee=0.00000001;
+	ln_units minFund=0.01 * SATOSHI_IN_BTC;
+	ln_units maxFund=0.167 * SATOSHI_IN_BTC;
+	double sendingFee=1 ;
 	double receivingFee=0;
 	double positiveSlope=sendingFee;
 	double negativeSlope=sendingFee*0.01;
-	double slow=0.00000001;
-	double shigh=0.00000002;
-	double baseFee=0.00000001;
+	double slow=1;
+	double shigh=2;
+	ln_units baseFee=1;
+	int payments=0;
+	int maxPayments=1;
+	string networkFile="";
+	string paymentsFile="";
+
 
 	int averageNumSlopes=3;
     
@@ -118,13 +123,16 @@ int main(int argc, char * * argv){
 	          {"numNodes",    required_argument, 0, 'n'},
 			  {"numSources",    required_argument, 0, 'q'},
 			  {"numDestinations",    required_argument, 0, 'w'},
-			  {"connectionProbability",    required_argument, 0, 'P'},
+			  {"connectionProbability",    required_argument, 0, 'c'},
 	          {"minFundsChannels",    required_argument, 0, 'm'},
 			  {"maxFundsChannels",    required_argument, 0, 'M'},
 			  {"modelsDirectory",   required_argument, 0, 'd'},
               {"feePolicy", required_argument, 0, 'f'},
 			  {"resolutionMethod", required_argument, 0, 'r'},
 			  {"paymentMethod", required_argument, 0, 'p'},
+			  {"maxPayments", required_argument, 0, 'P'},
+			  {"networkFromFile", required_argument, 0, 'N'},
+			  {"paymentsFromFile", required_argument, 0, 'Q'},
 			  {"seed",   required_argument, 0, 'S'},
 
 	          {0, 0, 0, 0}
@@ -155,6 +163,18 @@ int main(int argc, char * * argv){
 	        	meanSizePayments=atof(optarg);
 	        	break;
 
+	        case 'P':
+	  	        	maxPayments=atoi(optarg);
+	  	        	break;
+
+	        case 'N':
+	    	  	    networkFile=string(optarg);
+	    	  	    break;
+
+	        case 'Q':
+	    	  	    paymentsFile=string(optarg);
+	    	  	    break;
+
 	        case 'v':
 	        	variancePayments=atof(optarg);
 	        	break;
@@ -171,7 +191,7 @@ int main(int argc, char * * argv){
 	        	numNodes = atoi(optarg);
 	        	break;
 
-	        case 'P':
+	        case 'c':
 	        	connectionProbability = atof(optarg);
 	        	break;
 
@@ -248,10 +268,15 @@ int main(int argc, char * * argv){
 
 	std::cerr << "Generating network...\n";
 
+	if (networkFile!=""){
+		net = NetworkGenerator::generateBaseFromFile(networkFile);
+	} else {
+		net = NetworkGenerator::generateBase(numNodes, connectionProbability, minFund, maxFund, seed);
+	}
 
 	if (feePolicy = GENERAL_OPTIMIZED){
-		net = NetworkGenerator::generateOptimized(numNodes, connectionProbability, minFund * SATOSHI_IN_BTC, maxFund * SATOSHI_IN_BTC, sendingFee * SATOSHI_IN_BTC,
-													  shigh * SATOSHI_IN_BTC, slow * SATOSHI_IN_BTC, seed);
+		net=NetworkGenerator::generateOptimizedFee(net, sendingFee ,
+													  shigh , slow, seed);
 	} else {
 //		net = new NetworkGenerator::generate(numNodes, connectionProbability, minFund, maxFund, sendingFee,
 //		receivingFee, positiveSlope, negativeSlope, feePolicy, seed, averageNumSlopes);
@@ -263,27 +288,33 @@ int main(int argc, char * * argv){
 
 	std::cerr << "Initial funds: " << net->totalFunds() << std::endl;
 
-	NormalSizePoissonTimePaymentGenerator paymGen(net->getNumNodes(), numSources, numDestinations,
-										  seed, meanSizePayments * SATOSHI_IN_BTC, variancePayments, intervalPayments);
+	PaymentsGenerator * paymGen=0;
+
+	if (paymentsFile!=""){
+		paymGen = new PaymentGeneratorFromFile(paymentsFile);
+	} else {
+		paymGen = new NormalSizePoissonTimePaymentGenerator(net->getNumNodes(), numSources, numDestinations,
+										  seed, meanSizePayments, variancePayments, intervalPayments);
+	}
 
 	double time;
-	double amount;
+	ln_units amount;
 	int src,dst;
 
-	double initFunds = net->totalFunds();
+	long initFunds = net->totalFunds();
 
 
 	do {
 
 		net->checkResidualFunds();
 
-		std::cerr << "Generating next payment...";
-		paymGen.getNext(amount,time,src,dst);
+		std::cerr << "Getting next payment info...";
+		paymGen->getNext(amount,time,src,dst);
 
 		stats.payments+=1;
 		std::cerr << "Processing next payment - amount: " << amount << " time: " << time << " Src: " << src << " Dst: " << dst << "\n";
 
-		double totalFee=0;
+		ln_units totalFee=0;
 
         PaymentDeployer * pd;
         
@@ -291,8 +322,8 @@ int main(int argc, char * * argv){
                 ( payMethod == PaymentMethod::SINGLEPATH || payMethod == PaymentMethod::MULTIPATH )) {
             
             
-            std::vector<std::vector<double>> flows(net->getNumNodes(), vector<double>(net->getNumNodes()));
-			double fee=0;
+            std::vector<std::vector<ln_units>> flows(net->getNumNodes(), vector<ln_units>(net->getNumNodes()));
+            ln_units fee=0;
             
             pd = new PaymentDeployerExact(net->getNumNodes(), amount, src, dst);
 
@@ -316,14 +347,15 @@ int main(int argc, char * * argv){
                     
         }
         
+        if (amount==0) break;
+
         pd->setAmount(amount);
 
-        std::vector<std::vector<double>> flows(net->getNumNodes(), vector<double>(net->getNumNodes()));
-		double fee=0;
+        std::vector<std::vector<ln_units>> flows(net->getNumNodes(), vector<ln_units
+        		>(net->getNumNodes()));
+		long fee=0;
 
 		long transferredAmount=0;
-
-		std::cout << "QUI\n";
 
 		if (pd->RunSolver(flows,fee)==0){
 					std::cout << "Success!\n";
@@ -449,14 +481,19 @@ int main(int argc, char * * argv){
 			}
 		}
 */ 
+        payments++;
 
-	} while (time<totalTime);
+        delete pd;
+
+	} while (time<totalTime && payments < maxPayments );
 
 	cout.precision(8);
 	stats.print();
 	std::cout << "Total funds at the beginning: " << initFunds << "\n";
 	std::cout << "Total funds at the end: " << net->totalFunds() << "\n";
 
+	delete net;
+	delete paymGen;
 
 	return 0;
 }

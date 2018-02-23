@@ -46,7 +46,7 @@ s.t. endToEnd2: sum{x in N: x <> destination} flow[x, destination] = P;
 
 
 minimize cost: sum{x in N} flow[source,x];
-/* minimizing the amount of fees */
+/* minimizing the amount of currency exiting the source node */
 
 end;
 

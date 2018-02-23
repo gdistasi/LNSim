@@ -2,70 +2,63 @@
 set N;
 /* nodes*/
 
-param r{x in N, y in N}, default 0;
+param r{a in N, b in N}, default 0;
 /* residual fund of p.c. (u,v) */ 
 
 param P;
 /* payment value to be made to destination */
 
-var flow{x in N, y in N} >= 0;
+var flow{a in N, b in N} >= 0;
 /* variable expressing the amount paid by x to y */
 
-/* described if a link if used or not for a payment */
-var xi{a in N, b in N} binary;
+/* described if a link if used or not for a payment  */
+var xi{a in N, b in N} binary; 
 
-param baseSendingFee{x in N, y in N};
+s.t. binary{a in N, b in N}:  flow[a,b] <= xi[a,b] * r[a,b] ;
+
+param baseSendingFee{a in N, b in N} >= 0;
 
 /* num segments */
-param sendingFeeNumRegions{x in N, y in N} integer >= 0;
-
+param sendingFeeNumRegions{a in N, b in N} integer >= 0;
 
 /* sendingFeeLimits */
 param sendingFeeLimits { a in N, b in N, p in 0..sendingFeeNumRegions[a,b]: r[a,b]>0  } >= if p = 0 then 0 else sendingFeeLimits[a,b,p-1];
 
-
 /* sendingFeeRates */
-param sendingFeeRates{ x in N, y in N, p in 1..sendingFeeNumRegions[x,y]: r[x,y]>0 } >= if p = 1 then 0 else sendingFeeRates[x,y,p-1];
+param sendingFeeRates{ a in N, b in N, p in 1..sendingFeeNumRegions[a,b]: r[a,b]>0 } >= if p = 1 then 0 else sendingFeeRates[a,b,p-1];
 
 /* 
 http://homepages.rpi.edu/~mitchj/handouts/piecewise/ 
 https://orinanobworld.blogspot.it/2010/10/piecewise-linear-functions-in-math.html
 */
 
-var xa{a in N, b in N, p in 1..sendingFeeNumRegions[a,b]+1} >= 0;
-
-s.t. xa_constraint{a in N, b in N: r[a,b]>0}: 
-	sum{p in 0..sendingFeeNumRegions[a,b]} ( sendingFeeLimits[a,b,p] * xa[a,b,p+1] ) = flow[a,b];
-
-s.t. xa_constraint2{a in N, b in N: r[a,b]>0}:
-	sum{p in 1..sendingFeeNumRegions[a,b]+1} xa[a,b,p]=1;	
-
-	
 var fee{a in N, b in N} >= 0;
 
-s.t. fee_constraint{a in N, b in N: r[a,b]>0}:
-	fee[a,b] = sum{p in 0..sendingFeeNumRegions[a,b]-1} ( 
-		
-		baseSendingFee[a,b] + 
-		
-		xa[a,b,p+2] * ( 
-			baseSendingFee[a,b] + 
-			sum {k in 0..p-1} (( sendingFeeLimits[a,b,k+1] - sendingFeeLimits[a,b,k] ) * sendingFeeRates[a,b,k+1] )
-		)
-		
-	);
-	
-var ya{a in N, b in N, p in 1..sendingFeeNumRegions[a,b]+1} binary;
+var z{a in N, b in N, i in 1..sendingFeeNumRegions[a,b]} binary;
 
-s.t. sos2c0{a in N, b in N, p in 1..sendingFeeNumRegions[a,b]+1: r[a,b]>0}:
-	xa[a,b,p]<=ya[a,b,p];
-	
-s.t. sos2c1{a in N, b in N, i in 1..sendingFeeNumRegions[a,b]+1, j in 1..sendingFeeNumRegions[a,b]+1: r[a,b]>0 and abs(i-j)>1 }:
-	ya[a,b,i]+ya[a,b,j]<=1;
-	
-s.t. sos2c2{a in N, b in N: r[a,b]>0}:
-	sum{i in 1..sendingFeeNumRegions[a,b]+1} ya[a,b,i] <= 2;
-	
+var s{a in N, b in N, i in 1..sendingFeeNumRegions[a,b]} >= 0;
+
+/* value of the fee (only piecewise part, not the base fee) assumed at the limit points */
+
+param yy{a in N, b in N, i in 1..sendingFeeNumRegions[a,b]+1};
+
+
+s.t. z_con{a in N, b in N: r[a,b]>0}:
+	sum{i in 1..sendingFeeNumRegions[a,b]} z[a,b,i] = 1;
+
+
+s.t. sz_con{a in N, b in N, i in 1..sendingFeeNumRegions[a,b]: r[a,b]>0}:
+	s[a,b,i] <= z[a,b,i];
+
+
+s.t. sos1{a in N, b in N: r[a,b]>0}:
+	flow[a,b] = sum{i in 1..sendingFeeNumRegions[a,b]} ( sendingFeeLimits[a,b,i-1] * z[a,b,i] + 
+					s[a,b,i] * ( sendingFeeLimits[a,b,i] - sendingFeeLimits[a,b,i-1] ) );
+
+
+s.t. sos2{a in N, b in N: r[a,b]>0}:
+	fee[a,b] = sum{i in 1..sendingFeeNumRegions[a,b]} ( yy[a,b,i] * z[a,b,i] + 
+																					  s[a,b,i] * ( yy[a,b,i+1] - yy[a,b,i]  )  ); 
 
 param source in N;
 /* source */
@@ -74,20 +67,18 @@ param destination in N;
 /* destination */
 
 
-
-s.t. binary{x in N, y in N}: xi[x,y] >= flow[x,y]; 
-
 s.t. capcon{x in N, y in N}: flow[x,y] <= r[x,y];
 /* capacity constraint */
 
-s.t. flocon{z in N}: sum{x in N} flow[x,z] = sum {k in N} ( xi[z,k] * baseSendingFee[z,k]  + fee[z,k] );
-/* flow conservation constraint */
+s.t. flocon{a in N: a <> source and a <> destination}: sum{x in N} flow[x,a] =   
+sum{k in N}  flow[a,k]  + sum{k in N} (baseSendingFee[a,k] * xi[a,k]+ fee[a,k] ); 
+/* flow conservation constraint */ 
 
-s.t. endToEnd: sum{x in N: x <> source} flow[source,x]  = P + 
-sum{x in N, y in N} (fee[x,y] +  xi[x,y]* baseSendingFee[x,y] ); 
+s.t. endToEnd: sum{x in N: x <> source} flow[source,x]  - sum{x in N: x <> source} flow[x, source] = P 
++ 	sum{x in N, y in N: x <> source} (baseSendingFee[x,y] * xi[x,y] + fee[x,y] );  
 
 
-s.t. endToEnd2: sum{x in N} flow[x, destination] = P;
+s.t. endToEnd2: sum{x in N: x <> destination} flow[x, destination] -  sum{x in N} flow[destination, x]  = P;
 /* end-to-end flow constraints */
 
 minimize cost: sum{x in N} flow[source,x];

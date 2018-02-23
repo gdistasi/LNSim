@@ -8,14 +8,16 @@
 #include "PaymentsGenerator.h"
 #include <random>
 #include "defs.h"
-
+#include "utils.h"
 
  NormalSizePoissonTimePaymentGenerator::~NormalSizePoissonTimePaymentGenerator() {
 	delete size_dist;
 	delete time_dist;
 }
 
-void NormalSizePoissonTimePaymentGenerator::getNext(double& amount,
+
+
+void NormalSizePoissonTimePaymentGenerator::getNext(ln_units& amount,
 		double& time, int& source, int& destination) {
 
 	 double interv = time_dist->operator() (generator);
@@ -39,5 +41,42 @@ void NormalSizePoissonTimePaymentGenerator::getNext(double& amount,
 	 }
 
 }
+
+PaymentGeneratorFromFile::PaymentGeneratorFromFile(std::string filename){
+	fpOut = new ifstream();
+	fpOut->open(filename);
+
+
+	if (!fpOut->is_open()) {
+			cout << "failed to open file: " << filename << endl;
+			exit(1);
+	}
+
+}
+
+
+void PaymentGeneratorFromFile::getNext(ln_units& amount,
+		double& time, int& source, int& destination){
+
+	string line;
+
+
+	if (getline(*fpOut, line)) {
+
+		amount = convertTo(tokenize(line)[0]);
+		time = convertToDouble(tokenize(line)[1]);
+		source = convertTo(tokenize(line)[2]);
+		destination = convertTo(tokenize(line)[3]);
+
+	} else {
+		amount = 0;
+	}
+}
+
+PaymentGeneratorFromFile::~PaymentGeneratorFromFile(){
+	fpOut->close();
+	delete fpOut;
+}
+
 
 

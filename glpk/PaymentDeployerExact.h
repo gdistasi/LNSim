@@ -24,7 +24,7 @@ public:
 
 	void AddPaymentChannel(int A, int B, unsigned long resFundsA, unsigned long resFundsB, unsigned long baseFee, std::vector<long> sp, std::vector<unsigned long> cfs);
 
-	int  RunSolver(std::vector<std::vector<double>> & flow, double & totalFee);
+	virtual int  RunSolver( std::vector< std::vector<long> > & flow, long & totalFee);
 
 	void AddPaymentChannel(int A, int B, unsigned long resFundsA, unsigned long resFundsB, unsigned long baseFee, std::vector<unsigned long> sp, std::vector<unsigned long> cfs);
 

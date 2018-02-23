@@ -1,0 +1,20 @@
+
+
+<network>
+
+	<node>0</node>
+	<node>1</node>
+	
+	
+	
+	<link>
+		<from>0</from>
+		<to>1</to>
+		<capacityA>10000</capacityA>
+		<capacityB>10000</capacityB>
+		
+	 </link>
+
+
+
+</network>

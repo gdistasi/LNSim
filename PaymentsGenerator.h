@@ -12,35 +12,31 @@
 #include <random>
 #include <algorithm>
 #include <iostream>
+#include <string>
+#include "defs.h"
 
 using namespace std;
 
 class PaymentsGenerator {
 public:
-	PaymentsGenerator(int numNodesT, int sourcesT, int destinationsT, int seedT):
-		numNodes(numNodesT),sources(sourcesT),destinations(destinationsT),seed(seedT){};
-
-	virtual void getNext(double & amount, double & time, int & source, int & destination)=0;
-
-	void setMinAmount(double min){
-		minAmount=min;
-	}
-
+	//PaymentsGenerator(int numNodesT, int sourcesT, int destinationsT, int seedT):
+	//	numNodes(numNodesT),sources(sourcesT),destinations(destinationsT),seed(seedT){};
 
 	virtual ~PaymentsGenerator(){};
+	virtual void getNext(ln_units & amount, double & time, int & source, int & destination)=0;
 
-
-
-protected:
-	int numNodes;
-	int sources;
-	int destinations;
-	double seed;
-	double minAmount;
 };
 
-#endif /* PAYMENTSGENERATOR_H_ */
+class PaymentGeneratorFromFile: public PaymentsGenerator {
+public:
+	PaymentGeneratorFromFile(std::string filename);
+	virtual void getNext(ln_units & amount, double & time, int & source, int & destination);
+	virtual ~PaymentGeneratorFromFile();
 
+private:
+	ifstream * fpOut;
+
+};
 
 class NormalSizePoissonTimePaymentGenerator : public PaymentsGenerator {
 
@@ -48,7 +44,12 @@ public:
 
 	NormalSizePoissonTimePaymentGenerator(int numNodesT, int numSources, int numReceivers, int seedT,
 										  double meanT, double varianceT, double intervalT):
-											  PaymentsGenerator(numNodesT,numSources,numReceivers,seedT),generator(seed){
+											  generator(seed){
+
+		numNodes=numNodesT;
+		sources=numSources;
+		destinations=numReceivers;
+
 		size_dist = new std::normal_distribution<double>(meanT,varianceT);
 		time_dist = new std::exponential_distribution<double>(intervalT);
 		node_dist = new std::uniform_int_distribution<int>(0, numNodesT-1);
@@ -77,9 +78,13 @@ public:
 		last_time = 0;
 	}
 
-	virtual void getNext(double & amount, double & time, int & source, int & destination);
+	virtual void getNext(ln_units & amount, double & time, int & source, int & destination);
 
 	virtual ~NormalSizePoissonTimePaymentGenerator();
+
+	void setMinAmount(double min){
+			minAmount=min;
+	}
 
 
 protected:
@@ -87,8 +92,16 @@ protected:
 	std::normal_distribution<double> * size_dist;
 	std::exponential_distribution<double>  * time_dist;
 	std::uniform_int_distribution<int> * node_dist;
-	double seed;
 	double last_time;
 
 	vector<int> senders,receivers;
+
+	int numNodes;
+	int sources;
+	int destinations;
+	double seed;
+	double minAmount;
 };
+
+#endif /* PAYMENTSGENERATOR_H_ */
+

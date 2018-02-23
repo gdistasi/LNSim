@@ -9,9 +9,9 @@
 
 
 /* smallest unit that can be held in a channel - satoshis at the moment */
-typedef unsigned long ln_units;
+typedef long ln_units;
 
-typedef unsigned long millisatoshis;
+typedef  long millisatoshis;
 
 /* Base is the way to specify the fee based on a base fee plus a proportional part */
 /* Fixed just the proportional part */

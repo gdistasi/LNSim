@@ -23,25 +23,36 @@ PaymentChannel::PaymentChannel(PaymentChannelEndPoint * A,
 
 }
 
-void PaymentChannel::PayA(double Payment) {
+void PaymentChannel::PayA(ln_units P) {
 
-	long int units=Payment/MINIMUM_UNIT;
-	double P=((double)units)*MINIMUM_UNIT;
-	std::cout << "Res B" << residualFundsB << " Payment " << P << "\n";
-	assert( residualFundsB-P>-MINIMUM_UNIT );
+	std::cout << "Payment channel between " << this->A->getId() << " and " << this->B->getId() << "\n";
+	std::cout << "Paying " << P << " to " << "A\n";
+	std::cout << "Old balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
+
+
 	this->residualFundsB-=P;
-	std::cout << std::setprecision(15) << "paying " << P << "\n";
 	this->residualFundsA+=P;
+	assert(this->residualFundsB>=0);
+	assert(this->residualFundsA>=0);
+
+	std::cout << "New balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
+
+
 }
 
-void PaymentChannel::PayB(double payment) {
+void PaymentChannel::PayB(ln_units P) {
+	std::cout << "Payment channel between " << this->A->getId() << " and " << this->B->getId() << "\n";
+	std::cout << "Paying " << P << " to " << "B\n";
 
-	long int units=payment/MINIMUM_UNIT;
-	double P=((double)units)*MINIMUM_UNIT;
+	std::cout << "Old balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
 
-	assert(residualFundsA-P>-MINIMUM_UNIT);
 	this->residualFundsA-=P;
 	this->residualFundsB+=P;
+	assert(this->residualFundsB>=0);
+	assert(this->residualFundsA>=0);
+
+	std::cout << "New balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
+
 }
 
 
