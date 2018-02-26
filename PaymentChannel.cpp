@@ -25,34 +25,38 @@ PaymentChannel::PaymentChannel(PaymentChannelEndPoint * A,
 
 void PaymentChannel::PayA(ln_units P) {
 
+#ifdef DEBUG
 	std::cout << "Payment channel between " << this->A->getId() << " and " << this->B->getId() << "\n";
 	std::cout << "Paying " << P << " to " << "A\n";
 	std::cout << "Old balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
-
+#endif
 
 	this->residualFundsB-=P;
 	this->residualFundsA+=P;
 	assert(this->residualFundsB>=0);
 	assert(this->residualFundsA>=0);
 
-	std::cout << "New balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
+	//std::cout << "New balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
 
 
 }
 
 void PaymentChannel::PayB(ln_units P) {
+#ifdef DEBUG
 	std::cout << "Payment channel between " << this->A->getId() << " and " << this->B->getId() << "\n";
 	std::cout << "Paying " << P << " to " << "B\n";
-
 	std::cout << "Old balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
+#endif
+
 
 	this->residualFundsA-=P;
 	this->residualFundsB+=P;
 	assert(this->residualFundsB>=0);
 	assert(this->residualFundsA>=0);
 
+#ifdef DEBUG
 	std::cout << "New balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
-
+#endif
 }
 
 
@@ -89,14 +93,14 @@ void PaymentChannel::dump(){
 }
 
 
-std::vector<unsigned long> PaymentChannel::getPoints(bool reverse){
+std::vector<long> PaymentChannel::getPoints(bool reverse){
 	if (!reverse)
 		return feeCalc->getPoints(residualFundsA,residualFundsB);
 	else
 		return feeCalc->getPoints(residualFundsB,residualFundsA);
 }
 
-std::vector<unsigned long> PaymentChannel::getSlopes(bool reverse){
+std::vector<long> PaymentChannel::getSlopes(bool reverse){
 	if (!reverse ) {
 		return feeCalc->getSlopes(residualFundsA,residualFundsB);
 	} else {
@@ -105,7 +109,7 @@ std::vector<unsigned long> PaymentChannel::getSlopes(bool reverse){
 
 }
 
-unsigned long PaymentChannel::getBaseFee(bool reverse){
+long PaymentChannel::getBaseFee(bool reverse){
 	return feeCalc->getBaseFee(residualFundsA, residualFundsB);
 }
 

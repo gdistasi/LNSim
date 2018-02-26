@@ -124,7 +124,9 @@ ln_units LightningNetwork::totalFunds() {
 	for (PaymentChannel * ch: channels){
 		ret+=ch->getResidualFundsA()+ch->getResidualFundsB();
 		//std::cout << "CyCling" << channels.() << "ret " << ret << "\n";
+#ifdef DEBUG
 		ch->dump();
+#endif
 	}
 
 	return ret;
@@ -155,8 +157,6 @@ void LightningNetwork::checkResidualFunds() const {
 }
 
 void LightningNetwork::makePayments(std::vector<std::vector<ln_units> > payments) {
-	std::cout << "PRE PAYINGGGGG \n";
-
 	for (int i=0; i<getNumNodes(); i++){
 		for (int j=0; j<getNumNodes(); j++){
 			if (i==j || payments[i][j]==0) continue;
@@ -164,7 +164,7 @@ void LightningNetwork::makePayments(std::vector<std::vector<ln_units> > payments
 
 			//std::cout << "PAYINGGGGG \n";
 
-			std::cout << "i: " << i << " j: " << j << "\n";
+			//std::cout << "i: " << i << " j: " << j << "\n";
 			PaymentChannel * ch = getChannel(i,j);
 
 			if (i<j){

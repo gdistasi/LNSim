@@ -2,7 +2,7 @@
 #include "LightningNetwork.h"
 //#ifdef MAIN
 #include "PaymentsGenerator.h"
-#include "glpk/PaymentDeployer.h"
+#include "PaymentDeployer.h"
 #include "NetworkGenerator.h"
 
 #include <cmath>
@@ -10,14 +10,17 @@
 #include "defs.h"
 #include <string.h>
 #include <stdio.h>
+#include "Statistics.h"
 
-#include "glpk/PaymentDeployerExact.h"
+#include "SinglePathSolver.h"
 
 #include <getopt.h>
+#include "glpk/PaymentDeployerMultipathExact.h"
 
 using namespace std;
 
 string modelsDirectory="glpk";
+
 
 double findSmallestImbalance(std::vector<PaymentChannel *> channels){
 	double ret=abs(channels[0]->getResidualFundsA()-channels[0]->getResidualFundsB());
@@ -58,48 +61,33 @@ void checkPayment(std::vector<std::vector<ln_units>> flows, ln_units pay, ln_uni
 
 }
 
-class Stats {
 
-
-public:
-	Stats(){ success=0; unsuccess=0; total=0; payments=0; feesPaid=0; }
-
-	void print(){
-		std::cout << "Payments: " << payments << "\n";
-		std::cout << "Successes: " << success << "\n";
-		std::cout << "Unsuccesses: " << unsuccess << "\n";
-		std::cout << "Fees paid: " << feesPaid << "\n";
-
-	}
-
-	int success;
-	int unsuccess;
-	int payments;
-	double feesPaid;
-	int total;
-};
 
 int main(int argc, char * * argv){
 
 	int seed=0.1;
 	ln_units meanSizePayments=1000;
-	double variancePayments=0.1;
+	double variancePayments=500;
 	double intervalPayments=1;
 	double totalTime=60; //one day
 	int numNodes=2;
 	int numSources=1;
 	int numDestinations=1;
-	double connectionProbability=1;
+	double connectionProbability=0.2;
 	ln_units minFund=0.01 * SATOSHI_IN_BTC;
 	ln_units maxFund=0.167 * SATOSHI_IN_BTC;
 	double sendingFee=1 ;
 	double receivingFee=0;
-	double positiveSlope=sendingFee;
-	double negativeSlope=sendingFee*0.01;
+	//double positiveSlope=sendingFee;
+	//double negativeSlope=sendingFee*0.01;
+
+	/* in millisatoshis per satoshi transferred */
 	double slow=1;
 	double shigh=2;
+
+	/* in satoshis */
 	ln_units baseFee=1;
-	int payments=0;
+
 	int maxPayments=1;
 	string networkFile="";
 	string paymentsFile="";
@@ -245,7 +233,7 @@ int main(int argc, char * * argv){
             case 'p':
                 if (strcmp("sp", optarg)==0){
                     payMethod=PaymentMethod::SINGLEPATH;
-                } else if (strcmp("multipath", optarg)==0){
+                } else if (strcmp("mp", optarg)==0){
                 	payMethod=PaymentMethod::MULTIPATH;
                 } else {
                   cerr << "Payment method " << optarg << " not supported.\n";
@@ -263,7 +251,6 @@ int main(int argc, char * * argv){
 	        }
 	    }
 
-	Stats stats;
 	LightningNetwork * net=0;
 
 	std::cerr << "Generating network...\n";
@@ -303,6 +290,7 @@ int main(int argc, char * * argv){
 
 	long initFunds = net->totalFunds();
 
+	Stats stats;
 
 	do {
 
@@ -311,7 +299,7 @@ int main(int argc, char * * argv){
 		std::cerr << "Getting next payment info...";
 		paymGen->getNext(amount,time,src,dst);
 
-		stats.payments+=1;
+		stats.numPayments+=1;
 		std::cerr << "Processing next payment - amount: " << amount << " time: " << time << " Src: " << src << " Dst: " << dst << "\n";
 
 		ln_units totalFee=0;
@@ -319,34 +307,36 @@ int main(int argc, char * * argv){
         PaymentDeployer * pd;
         
         if (    resMethod==ResolutionMethod::EXACT &&
-                ( payMethod == PaymentMethod::SINGLEPATH || payMethod == PaymentMethod::MULTIPATH )) {
-            
-            
-            std::vector<std::vector<ln_units>> flows(net->getNumNodes(), vector<ln_units>(net->getNumNodes()));
-            ln_units fee=0;
-            
-            pd = new PaymentDeployerExact(net->getNumNodes(), amount, src, dst);
+                payMethod == PaymentMethod::MULTIPATH ) {
+            pd = new PaymentDeployerMultipathExact(net->getNumNodes(), amount, src, dst);
 
-			for ( PaymentChannel * ch: net->getChannels()){
-
-                /* add directional channel in one direction ... */
-                (dynamic_cast<PaymentDeployerExact *>(pd))->AddPaymentChannel(ch->getEndPointA()->getId(), ch->getEndPointB()->getId(),
-                            ch->getResidualFundsA(),	ch->getResidualFundsB(), 
-							ch->getBaseFee(),
-							ch->getPoints(),
-							ch->getSlopes());
-                
-                /* ... and the other */
-                (dynamic_cast<PaymentDeployerExact *>(pd))->AddPaymentChannel(ch->getEndPointB()->getId(), ch->getEndPointA()->getId(),
-                            ch->getResidualFundsB(),ch->getResidualFundsA(), 
-                            ch->getBaseFee(true),
-							ch->getPoints(true),
-							ch->getSlopes(true));
-            }
-        
-                    
+        } else if (resMethod==ResolutionMethod::EXACT &&
+        	   payMethod == PaymentMethod::SINGLEPATH ) {
+            pd = new SinglePathSolver(net->getNumNodes(), amount, src, dst);
+        } else {
+        	std::cerr << " The combination of resolution method and method of allocation is not supported.\n";
+        	return 1;
         }
         
+        /* Add payment channels */
+        for ( PaymentChannel * ch: net->getChannels()){
+
+                        /* add directional channel in one direction ... */
+                        pd->AddPaymentChannel(ch->getEndPointA()->getId(), ch->getEndPointB()->getId(),
+                                    ch->getResidualFundsA(),	ch->getResidualFundsB(),
+        							ch->getBaseFee(),
+        							ch->getPoints(),
+        							ch->getSlopes());
+
+                        /* ... and the other */
+                        pd->AddPaymentChannel(ch->getEndPointB()->getId(), ch->getEndPointA()->getId(),
+                                    ch->getResidualFundsB(),ch->getResidualFundsA(),
+                                    ch->getBaseFee(true),
+        							ch->getPoints(true),
+        							ch->getSlopes(true));
+        }
+
+
         if (amount==0) break;
 
         pd->setAmount(amount);
@@ -361,22 +351,19 @@ int main(int argc, char * * argv){
 					std::cout << "Success!\n";
 					totalFee+=fee;
 					net->makePayments(flows);
-					stats.feesPaid+=totalFee;
-					transferredAmount+=amount;
+
+					int pathLength = stats.calcPathLength(flows);
+					stats.averagePathLength = (stats.averagePathLength * stats.successes + pathLength) / (1+stats.successes);
+					stats.averageFee = (stats.averageFee * stats.successes + fee) /(1+stats.successes);
+
+					stats.successes++;
+					stats.feesPaid+=fee;
         } else {
 					std::cerr<<"Unsuccess!\n";
-					stats.unsuccess+=1;
-                    break;
+					stats.fails+=1;
         }
 
 
-        if (transferredAmount == amount)
-			stats.success+=1;
-        else
-            stats.unsuccess+=1;
-            
-            
-            
             
 /*
 		case ResolutionMethod::HEURISTIC:
@@ -481,11 +468,9 @@ int main(int argc, char * * argv){
 			}
 		}
 */ 
-        payments++;
-
         delete pd;
 
-	} while (time<totalTime && payments < maxPayments );
+	} while (time<totalTime && stats.numPayments < maxPayments );
 
 	cout.precision(8);
 	stats.print();
@@ -494,6 +479,8 @@ int main(int argc, char * * argv){
 
 	delete net;
 	delete paymGen;
+
+	assert(stats.successes+stats.fails==stats.numPayments);
 
 	return 0;
 }

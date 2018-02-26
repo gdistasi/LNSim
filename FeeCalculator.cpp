@@ -29,9 +29,9 @@ void FeeCalculatorOptimized::dump(){
 }
 
 
-std::vector<unsigned long> FeeCalculatorOptimized::getPoints(ln_units resFundsA, ln_units resFundsB){
+std::vector<long> FeeCalculatorOptimized::getPoints(ln_units resFundsA, ln_units resFundsB){
 
-	std::vector<unsigned long> points;
+	std::vector<long> points;
 
 	points.push_back(0);
 
@@ -45,9 +45,9 @@ std::vector<unsigned long> FeeCalculatorOptimized::getPoints(ln_units resFundsA,
 }
 
 
-std::vector<unsigned long> FeeCalculatorOptimized::getSlopes(ln_units resFundsA, ln_units resFundsB){
+std::vector<long> FeeCalculatorOptimized::getSlopes(ln_units resFundsA, ln_units resFundsB){
 
-	std::vector<unsigned long> slopes;
+	std::vector<long> slopes;
 
 	if (resFundsA > resFundsB){
 		slopes.push_back(slow);

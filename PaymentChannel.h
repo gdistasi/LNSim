@@ -55,9 +55,9 @@ public:
 	virtual void calcLinearizedFee(double paym_amount, double & sending, double  & receiving, bool reverse=false) const{};
 	virtual millisatoshis calcFee(millisatoshis P, PaymentChannel * pc, bool reverse) { return feeCalc->calcFee(P,pc,reverse);   }
 
-	std::vector<unsigned long> getPoints(bool reverse=false);
-	std::vector<unsigned long> getSlopes(bool reverse=false);
-	unsigned long getBaseFee(bool reverse=false);
+	std::vector<long> getPoints(bool reverse=false);
+	std::vector<long> getSlopes(bool reverse=false);
+	long getBaseFee(bool reverse=false);
 
 
 

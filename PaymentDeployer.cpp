@@ -21,13 +21,18 @@
 
 using namespace std;
 
+PaymentDeployer::~PaymentDeployer(){
+	for (auto ch: channels){
+		delete ch.second;
+	}
+}
 
-unsigned long PaymentDeployer::resFunds(int x,int y){
+long PaymentDeployer::resFunds(int x,int y){
 	//std::cout << "FINDING " << channels.find( pair<int,int>(x,y))->second.resFundsA  ;
 
 	if (channels.find( pair<int,int>(x,y)) == channels.end()) return 0;
 	//std::cout << "ResFunds " << x << " y " << y << " " << channels.find( pair<int,int>(x,y) )->second.resFundsA << "\n";
-	else return channels.find( pair<int,int>(x,y) )->second.resFundsA;
+	else return channels.find( pair<int,int>(x,y) )->second->resFundsA;
 }
 
 
@@ -239,6 +244,81 @@ int  PaymentDeployer::RunSolverOld(std::vector<std::vector<double>> & flow, doub
 		return 0;
 }
 */
+
+
+
+std::vector<long> PaymentDeployer::getCoefficients(int x, int y){
+	std::pair<int,int> p = std::pair<int,int>(x,y);
+	std::vector<long> empty;
+
+	if (fees.find(p)!=fees.end()){
+		return fees[p].coefficients;
+	} else {
+		//std::cout << "RETURNING EMPTY\m";
+		return empty;
+	}
+}
+
+std::vector<long> PaymentDeployer::getPoints(int x, int y){
+	std::pair<int,int> p = std::pair<int,int>(x,y);
+	std::vector<long> empty;
+
+	if (fees.find(p)!=fees.end()){
+		return fees[p].starting_points;
+	} else {
+		return empty;
+	}
+
+}
+
+long PaymentDeployer::getBaseFee(int x, int y){
+	std::pair<int,int> p = std::pair<int,int>(x,y);
+
+	if (fees.find(p)!=fees.end()){
+		return fees[p].baseFee;
+	} else {
+		return 0;
+	}
+
+}
+
+void PaymentDeployer::AddPaymentChannel(int A, int B, long resFundsA, long resFundsB, long baseFee, std::vector<long> sp, std::vector<long> cfs){
+
+	PaymentChannel * pc = new PaymentChannel(A,B, resFundsA, resFundsB);
+
+	fees.insert( std::pair< std::pair<int,int> , PiecewiseLinearFee > ( std::pair<int, int>(A,B), PiecewiseLinearFee(baseFee, sp, cfs) ) );
+	//std::cout << "AAA--Adding payment channel between " << A << " and " << B << " with funds " << resFundsA << " and " << resFundsB << "\n";
+	channels.insert( std::pair< std::pair<int,int> , PaymentChannel * > ( std::pair<int, int>(A,B),  pc));
+
+	//channelsByNode.insert(std::pair<int, PaymentChannel *>(A, pc));
+	channelsByNode[A].push_back(pc);
+}
+
+double PaymentDeployer::PiecewiseLinearFee::calcFee(long payment){
+
+	if (payment==0) return 0;
+
+	double fee = baseFee;
+
+	long rest = payment;
+
+	int i=1;
+
+	while (rest>0){
+
+		if ( rest >= (starting_points[i] - starting_points[i-1])){
+			fee +=  ( starting_points[i] - starting_points[i-1] ) * coefficients[i-1] / 1000;
+			rest -= starting_points[i] - starting_points[i-1];
+		} else {
+			fee += rest *  coefficients[i-1] / 1000;
+			break;
+		}
+	}
+
+	return fee;
+
+}
+
 
 std::string exec(const char* cmd) {
     char buffer[128];

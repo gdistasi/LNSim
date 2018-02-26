@@ -76,6 +76,7 @@ public:
 		}
 
 		last_time = 0;
+		minAmount = 0;
 	}
 
 	virtual void getNext(ln_units & amount, double & time, int & source, int & destination);

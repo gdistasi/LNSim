@@ -217,7 +217,10 @@ LightningNetwork * NetworkGenerator::generateBase(int numNodes, double connProb,
 																mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)));
 
 							net->addPaymentChannel(pc, i, j);
+
+#ifdef DEBUG
 							pc->dump();
+#endif
 						}
 
 		}
