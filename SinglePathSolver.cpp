@@ -5,6 +5,7 @@
  *      Author: giovanni
  */
 
+#include "MultipathHeuristic.h"
 #include "SinglePathSolver.h"
 
 #include <limits>
@@ -12,11 +13,22 @@
 #include <cassert>
 #include <cmath>
 #include <algorithm>
+#include <cstring>
 
 using namespace std;
 
-#define DBL_MAX std::numeric_limits<double>::max()
+SinglePathSolver::SinglePathSolver(const MultipathHeuristic & mp):PaymentDeployer(mp.numNodes, mp.payment, mp.source, mp.destination){
 
+	//std::cout << "HERE\n";
+	for (auto ch: mp.channels){
+		int from = ch.first.first;
+		int to = ch.first.second;
+		assert(mp.fees.find(pair<int,int>(from,to))!=mp.fees.end());
+		PaymentDeployer::PiecewiseLinearFee fee = mp.fees.find(pair<int,int>(from,to))->second;
+		AddPaymentChannel(from, to, ch.second->resFundsA, ch.second->resFundsB, fee.baseFee, fee.starting_points, fee.coefficients);
+
+	}
+}
 
 int SinglePathSolver::constructPath(std::vector< std::vector<long> > & flow, long & totalFee, vector<Node> nodes){
 
@@ -25,46 +37,27 @@ int SinglePathSolver::constructPath(std::vector< std::vector<long> > & flow, lon
 
 	double fee=0;
 
-	Node * nxt=sourceN;
+	Node * curr=sourceN;
 
-	while ( nxt->getNext() != 0){
-		long pay = round<long>(nxt->getNext()->getPaymentToArrive());
-		flow[nxt->getId()][nxt->getNext()->getId()] = pay;
-		std::cerr << "flow[" << nxt->getId() << ","<< nxt->getNext()->getId() << "]=" << pay << "\n";
-		fee+=nxt->getDistance();
-		nxt=nxt->getNext();
+	long paying = round<long>(curr->getNext()->getPaymentToArrive());
+
+	while ( curr->getNext() != 0){
+		long pay = round<long>(curr->getNext()->getPaymentToArrive());
+		flow[curr->getId()][curr->getNext()->getId()] = pay;
+		std::cerr << "flow[" << curr->getId() << ","<< curr->getNext()->getId() << "]=" << pay << "\n";
+		fee+=curr->getDistance();
+		curr=curr->getNext();
 	}
 
 
-	totalFee = round(fee);
+	totalFee = paying - payment;
 
-	if (nxt->getId() != destination) return 1;
+	if (curr->getId() != destination) return 1;
 
 	return 0;
 
 }
 
-/* calc the distance from i to j: the amount of fee required to carry the payment P from i to j */
-double SinglePathSolver::calcDistance(int i, int j, double payment){
-
-	//vector<PaymentChannel *> chs = channelsByNode[i];
-	assert(i!=j);
-
-	double dis=DBL_MAX;
-
-	if (channels.find(std::pair<int,int>(i,j))==channels.end() ||  channels[std::pair<int,int>(i,j)]->resFundsA < round(payment)){
-		return dis;
-	}
-
-	if (i == source) return 0;
-
-	if (fees.find(pair<int,int>(i, j))!=fees.end()){
-		std::cout << "fee " << fees[pair<int,int>(i, j)].calcFee(payment) << "\n";
-		dis = fees[pair<int,int>(i, j)].calcFee(payment);
-	}
-
-	return dis;
-}
 
 int  SinglePathSolver::RunSolver( std::vector< std::vector<long> > & flow, long & totalFee){
 
@@ -72,14 +65,14 @@ int  SinglePathSolver::RunSolver( std::vector< std::vector<long> > & flow, long 
 	vector<Node *> visited;
 	vector<Node *> not_visited;
 
-	for (int i=0; i<flow.size(); i++){
+	for (int i=0; i<numNodes; i++){
 		if (i==destination){
 			nodes.push_back(Node(i, 0, 0, payment));
 		} else
 			nodes.push_back(Node(i, 0, DBL_MAX, 0));
 	}
 
-	for (int i=0; i<flow.size(); i++)
+	for (int i=0; i<numNodes; i++)
 		if (i!=destination){
 			not_visited.push_back(&nodes[i]);
 		}
@@ -96,7 +89,7 @@ int  SinglePathSolver::RunSolver( std::vector< std::vector<long> > & flow, long 
 		for (auto n: not_visited){
 				double dis;
 				for (auto vis: visited){
-					dis = calcDistance(n->getId(), vis->getId(), vis->getPaymentToGet());
+					dis = calcFee(n->getId(), vis->getId(), vis->getPaymentToGet());
 					if ( dis < n->getDistance()){
 						n->setDistance(dis);
 						n->setPaymentToArrive(vis->getPaymentToGet() + dis);
@@ -117,7 +110,7 @@ int  SinglePathSolver::RunSolver( std::vector< std::vector<long> > & flow, long 
 			}
 		}
 
-		assert(minDis < DBL_MAX);
+		if (minDis == DBL_MAX) return 1;
 
 		//add the nearest to the visited set and erase from the non_visited
 		visited.push_back(nearest);

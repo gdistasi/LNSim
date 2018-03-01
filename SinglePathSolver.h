@@ -13,6 +13,9 @@
 #include <iostream>
 using namespace std;
 
+class MultipathHeuristic;
+
+
 class SinglePathSolver: public PaymentDeployer {
 public:
 	//SinglePathSolver();
@@ -20,6 +23,8 @@ public:
 	SinglePathSolver(int numN, long P, int sourcet, int destinationt):
 			PaymentDeployer(numN,P,sourcet, destinationt){};
 
+
+	SinglePathSolver(const MultipathHeuristic & mp);
 
     virtual int  RunSolver( std::vector< std::vector<long> > & flow, long & totalFee);
 

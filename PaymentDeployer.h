@@ -11,11 +11,28 @@
 #include <map>
 #include <stdio.h>
 #include <vector>
+#include <cassert>
+#include <cmath>
+#include <algorithm>
 
+using namespace std;
 
-extern std::string modelsDirectory;
+extern string modelsDirectory;
 
-std::string exec(const char* cmd);
+string exec(const char* cmd);
+
+#define DBL_MAX std::numeric_limits<double>::max()
+
+// a path (i.e. in fact a flow allocation which can then also be multipath) and a fee
+typedef vector< pair< pair<int, int>, long > > Tpath;
+typedef pair< pair<int, int>, long > Tpath_el;
+
+typedef vector< vector<long> > Tflows;
+
+Tpath convertFlowsToPath(Tflows flows, int source, int destination);
+//Tpath convertFromPathToFlows(Tflows flows);
+void  convertPathsToFlows(vector<Tpath> path, Tflows & flows);
+
 
 class PaymentDeployer {
     
@@ -24,6 +41,10 @@ public:
 		numNodes(numN),payment(P),source(sourcet),destination(destinationt){};
 
 	virtual ~PaymentDeployer();
+
+	PaymentDeployer(const PaymentDeployer& pd);
+
+	//PaymentDeployer(){}
 
 	std::vector<long> getCoefficients(int x, int y);
 
@@ -35,11 +56,18 @@ public:
 
     void setAmount(long am){ payment=am; }
     
-    virtual int  RunSolver( std::vector< std::vector<long> > & flow, long & totalFee) = 0;
+    virtual int  RunSolver(Tflows & flow, long & totalFee) = 0;
 
-	virtual int  RunSolverOld(std::vector<std::vector<double>> & flow, double & totalFee){};
+	virtual int  RunSolverOld(Tflows & flow, double & totalFee){};
     
 	long resFunds(int x,int y);
+
+	double calcFee(int i, int j, double payment);
+
+	int removeUsedCapacity(Tpath path);
+
+
+
 
 	/* directional channel */
 	class PaymentChannel {
@@ -71,24 +99,26 @@ public:
 
 	};
 
+	PiecewiseLinearFee getFee(int i, int j){
+		return fees[pair<int,int>(i,j)];
+	}
 
+	map<pair<int, int>, PaymentDeployer::PaymentChannel *> & getChannels();
 
 protected:
 
     int numNodes;
-
-    //the payment is expressed in satoshi
+    //the payment is expressed in millisatoshis
 	long payment;
 	int source;
 	int destination;
 
-    std::map<std::pair<int,int>, PaymentChannel *> channels;
-
-    std::map<int, std::vector<PaymentChannel *> > channelsByNode;
+    map<pair<int,int>, PaymentChannel *> channels;
+    map<int, vector<PaymentChannel *> > channelsByNode;
+	map<pair<int,int>, PiecewiseLinearFee> fees;
 
 	enum solverErrors : int  {COULD_NOT_OPEN_DATA_FILE, COULD_NOT_OPEN_OUTPUT_FILE, PAYMENT_FAILED};
 
-	std::map<std::pair<int,int>, PiecewiseLinearFee> fees;
 };
 
 

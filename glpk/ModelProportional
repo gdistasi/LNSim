@@ -1,0 +1,47 @@
+/* no base fees - fee proportional to amount - low bounds for flows on the network */
+
+set N;
+/* nodes*/
+
+param r{a in N, b in N}, default 0;
+/* residual fund of p.c. (u,v) */ 
+
+param P;
+/* payment value to be made to destination */
+
+var flow{a in N, b in N} >= 0;
+/* variable expressing the amount paid by x to y */
+
+/* num segments */
+param feerate_perkw{a in N, b in N} integer >= 0;
+
+param source in N;
+/* source */
+
+param destination in N;
+/* destination */
+
+s.t. capcon{x in N, y in N}: flow[x,y] <= r[x,y];
+/* capacity constraint */
+
+param lowbound{x in N, y in N} >=0;
+
+s.t. lowboundsst{x in N, y in N}: lowbound[x,y]<= flow[x,y];
+
+s.t. flocon{a in N: a <> source and a <> destination}: sum{x in N} flow[x,a] =   
+sum{k in N}  flow[a,k]  + sum{k in N} ( flow[a,k] * feerate_perkw[a,k] ) / 1000;  
+/* flow conservation constraint */
+
+s.t. endToEnd: sum{x in N: x <> source} flow[source,x]  - sum{x in N: x <> source} flow[x, source] = P 
++ 	sum{x in N, y in N: x <> source} (flow[x,y] * feerate_perkw[x,y] ) /1000;   
+
+s.t. endToEnd2: sum{x in N: x <> destination} flow[x, destination] -  sum{x in N} flow[destination, x]  = P;
+/* end-to-end flow constraints */
+
+minimize cost: sum{x in N} flow[source,x];
+/* minimizing the amount of fees */
+
+end;
+
+
+

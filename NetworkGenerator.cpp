@@ -19,6 +19,8 @@
 
 #include  "utils.h"
 
+using namespace std;
+
 NetworkGenerator::NetworkGenerator() {
 	// TODO Auto-generated constructor stub
 
@@ -261,10 +263,10 @@ LightningNetwork *  NetworkGenerator::generateBaseFromFile(string filename){
 	while (	getline (fpOut,line)){
 		from = convertTo ( tokenize(line)[0]  );
 		to = convertTo( tokenize(line)[1]  );
-		capA = convertTo( tokenize(line)[2]  );
-		capB = convertTo( tokenize(line)[3]  );
+		capA = convertTo( tokenize(line)[2]  ) * 1000;
+		capB = convertTo( tokenize(line)[3]  ) * 1000;
 
-		PaymentChannel * pc = new PaymentChannel(net->nodes[from], net->nodes[to],capA, capB);
+		PaymentChannel * pc = new PaymentChannel(net->nodes[from], net->nodes[to], capA, capB);
 
 		net->addPaymentChannel(pc, from, to);
 

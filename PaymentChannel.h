@@ -59,7 +59,9 @@ public:
 	std::vector<long> getSlopes(bool reverse=false);
 	long getBaseFee(bool reverse=false);
 
-
+	const FeeCalculator* getFeeCalc() const {
+		return feeCalc;
+	}
 
 protected:
 	ln_units residualFundsA,residualFundsB;

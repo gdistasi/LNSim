@@ -1,25 +1,27 @@
 
-#include "PaymentDeployer.h"
+#include "PaymentDeployerMultipathExact.h"
 
 using namespace std;
 
-class PaymentDeployerProportional: public PaymentDeployer {
+class PaymentDeployerProportional: public PaymentDeployerMultipathExact {
 
 public:
 	PaymentDeployerProportional(int numN, double P, int sourcet, int destinationt):
-		PaymentDeployer(numN,P,sourcet,destinationt){};
+		PaymentDeployerMultipathExact(numN,P,sourcet,destinationt){};
 
-	void AddPaymentChannel( int A, int B, double resFundsA, double resFundsB, double sfeeA );
 
-	virtual ~PaymentDeployerProportional(){}
+	virtual int  RunSolver(std::vector<std::vector<long>> & flow, long & totalFee);
 
-	virtual int  RunSolver(std::vector<std::vector<double>> & flow, double & totalFee);
+	void setLowerBound(int i, int j, long l) { lowerbound[pair<int,int>(i,j)] = l; }
 
-	//int  RunSolverOld(std::vector<std::vector<double>> & flow, double & totalFee);
 
 protected:
-	double sendingFee(int x,int y);
-	//double receivingFee(int x,int y);
 
-	std::map< std::pair<int,int>, double> propFee;
+	long getLowerBound(int i, int j);
+
+	long feerate_perkw(int i, int j);
+
+	/* lower bound for flows on channels -- upper bounds are given by channel capacities */
+	map<pair<int,int>, long> lowerbound;
+
 };

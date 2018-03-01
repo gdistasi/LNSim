@@ -13,6 +13,7 @@
 #include "Statistics.h"
 
 #include "SinglePathSolver.h"
+#include "MultipathHeuristic.h"
 
 #include <getopt.h>
 #include "glpk/PaymentDeployerMultipathExact.h"
@@ -66,24 +67,30 @@ void checkPayment(std::vector<std::vector<ln_units>> flows, ln_units pay, ln_uni
 int main(int argc, char * * argv){
 
 	int seed=0.1;
-	ln_units meanSizePayments=1000;
+	ln_units meanSizePayments=1000 * 1000;
 	double variancePayments=500;
 	double intervalPayments=1;
 	double totalTime=60; //one day
 	int numNodes=2;
 	int numSources=1;
 	int numDestinations=1;
-	double connectionProbability=0.2;
-	ln_units minFund=0.01 * SATOSHI_IN_BTC;
-	ln_units maxFund=0.167 * SATOSHI_IN_BTC;
-	double sendingFee=1 ;
+	double connectionProbability=0.1;
+
+	ln_units minFund=0.01 * MILLISATOSHIS_IN_BTC;
+	ln_units maxFund=0.167 * MILLISATOSHIS_IN_BTC;
+
+	double sendingFee=1000 ;
 	double receivingFee=0;
 	//double positiveSlope=sendingFee;
 	//double negativeSlope=sendingFee*0.01;
 
-	/* in millisatoshis per satoshi transferred */
-	double slow=1;
-	double shigh=2;
+
+	/* in millisatoshis */
+	long basefee=1000;
+
+	/* in millisatoshis per kw (kiloweight - 1000 satoshis) transferred */
+	long feerate_low=10;
+	long feerate_high=30;
 
 	/* in satoshis */
 	ln_units baseFee=1;
@@ -94,10 +101,14 @@ int main(int argc, char * * argv){
 
 
 	int averageNumSlopes=3;
+
+	int numPaths=3;
     
     ResolutionMethod resMethod=ResolutionMethod::EXACT;
     FeeType feePolicy=FeeType::GENERAL;
     PaymentMethod payMethod=PaymentMethod::SINGLEPATH;
+
+    bool hOptimization=true;
 
 	//handling of options
 	while (1)
@@ -118,9 +129,13 @@ int main(int argc, char * * argv){
               {"feePolicy", required_argument, 0, 'f'},
 			  {"resolutionMethod", required_argument, 0, 'r'},
 			  {"paymentMethod", required_argument, 0, 'p'},
+			  {"numPaths", required_argument, 0, 'R'},
 			  {"maxPayments", required_argument, 0, 'P'},
 			  {"networkFromFile", required_argument, 0, 'N'},
 			  {"paymentsFromFile", required_argument, 0, 'Q'},
+			  {"feerateLow", required_argument, 0, 'l'},
+			  {"feerateHigh", required_argument, 0, 'h'},
+			  {"heuristicOptimization", required_argument, 0, 'O'},
 			  {"seed",   required_argument, 0, 'S'},
 
 	          {0, 0, 0, 0}
@@ -158,15 +173,27 @@ int main(int argc, char * * argv){
 	        case 'N':
 	    	  	    networkFile=string(optarg);
 	    	  	    break;
-
+	        case 'R':
+   	    	  	    numPaths=atoi(optarg);
+  	    	  	    break;
 	        case 'Q':
 	    	  	    paymentsFile=string(optarg);
 	    	  	    break;
+
+	        case 'O':
+	        	   	hOptimization=atoi(optarg)==1;
+	        	    break;
 
 	        case 'v':
 	        	variancePayments=atof(optarg);
 	        	break;
 
+	        case 'l':
+	 	        	feerate_low=atoi(optarg);
+	 	        	break;
+	        case 'h':
+	 	        	feerate_high=atoi(optarg);
+	 	        	break;
 	        case 'i':
 	        	intervalPayments=atof(optarg);
 	        	break;
@@ -253,6 +280,7 @@ int main(int argc, char * * argv){
 
 	LightningNetwork * net=0;
 
+	std::cerr << "All values are expressed in millisatoshis. Input files are in satoshis.\n";
 	std::cerr << "Generating network...\n";
 
 	if (networkFile!=""){
@@ -263,7 +291,7 @@ int main(int argc, char * * argv){
 
 	if (feePolicy = GENERAL_OPTIMIZED){
 		net=NetworkGenerator::generateOptimizedFee(net, sendingFee ,
-													  shigh , slow, seed);
+													  feerate_high , feerate_low, seed);
 	} else {
 //		net = new NetworkGenerator::generate(numNodes, connectionProbability, minFund, maxFund, sendingFee,
 //		receivingFee, positiveSlope, negativeSlope, feePolicy, seed, averageNumSlopes);
@@ -306,14 +334,17 @@ int main(int argc, char * * argv){
 
         PaymentDeployer * pd;
         
-        if (    resMethod==ResolutionMethod::EXACT &&
-                payMethod == PaymentMethod::MULTIPATH ) {
+        if (    resMethod==ResolutionMethod::EXACT && payMethod == PaymentMethod::MULTIPATH ) {
             pd = new PaymentDeployerMultipathExact(net->getNumNodes(), amount, src, dst);
-
-        } else if (resMethod==ResolutionMethod::EXACT &&
-        	   payMethod == PaymentMethod::SINGLEPATH ) {
+        } else if (resMethod==ResolutionMethod::EXACT &&  payMethod == PaymentMethod::SINGLEPATH ) {
             pd = new SinglePathSolver(net->getNumNodes(), amount, src, dst);
-        } else {
+        } else if (resMethod==ResolutionMethod::HEURISTIC){
+        	if (payMethod == PaymentMethod::SINGLEPATH){
+        	        		std::cerr << "Heuristic is not for singlepath mode.\n";
+        	        		exit(1);
+        	}
+        	pd = new MultipathHeuristic(net->getNumNodes(), amount, src, dst, numPaths, hOptimization);
+		} else {
         	std::cerr << " The combination of resolution method and method of allocation is not supported.\n";
         	return 1;
         }

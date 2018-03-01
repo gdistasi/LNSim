@@ -63,7 +63,7 @@ void PaymentGeneratorFromFile::getNext(ln_units& amount,
 
 	if (getline(*fpOut, line)) {
 
-		amount = convertTo(tokenize(line)[0]);
+		amount = convertTo(tokenize(line)[0]) * 1000;
 		time = convertToDouble(tokenize(line)[1]);
 		source = convertTo(tokenize(line)[2]);
 		destination = convertTo(tokenize(line)[3]);

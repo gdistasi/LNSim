@@ -15,11 +15,23 @@
 #include <stdexcept>
 #include <string>
 
-#include <string.h>
+#include <cassert>
+#include <cmath>
+#include <algorithm>
 
-#include <assert.h>
+#include <string.h>
+#include <cstring>
+
+#define DBL_MAX std::numeric_limits<double>::max()
+
 
 using namespace std;
+
+PaymentDeployer::PaymentDeployer(const PaymentDeployer & pd){
+	unsigned char * src = (unsigned char *)&pd;
+	unsigned char * dst = (unsigned char *)this;
+	memcpy(dst, src, sizeof(*this));
+}
 
 PaymentDeployer::~PaymentDeployer(){
 	for (auto ch: channels){
@@ -35,6 +47,7 @@ long PaymentDeployer::resFunds(int x,int y){
 	else return channels.find( pair<int,int>(x,y) )->second->resFundsA;
 }
 
+map<pair<int, int>, PaymentDeployer::PaymentChannel *> & PaymentDeployer::getChannels(){ return channels;}
 
 /*
 int  PaymentDeployer::RunSolverOld(std::vector<std::vector<double>> & flow, double & totalFee) {
@@ -300,7 +313,7 @@ double PaymentDeployer::PiecewiseLinearFee::calcFee(long payment){
 
 	double fee = baseFee;
 
-	long rest = payment;
+	double rest = payment;
 
 	int i=1;
 
@@ -319,6 +332,29 @@ double PaymentDeployer::PiecewiseLinearFee::calcFee(long payment){
 
 }
 
+/* calc the distance from i to j: the amount of fee required to carry the payment P from i to j */
+double PaymentDeployer::calcFee(int i, int j, double payment){
+
+	//vector<PaymentChannel *> chs = channelsByNode[i];
+	assert(i!=j);
+
+	double dis=DBL_MAX;
+
+	if (channels.find(std::pair<int,int>(i,j))==channels.end() ||  channels[std::pair<int,int>(i,j)]->resFundsA < round(payment)){
+		return dis;
+	}
+
+	if (i == source) return 0;
+
+	if (fees.find(pair<int,int>(i, j))!=fees.end()){
+		//std::cout << "fee " << fees[pair<int,int>(i, j)].calcFee(payment) << "\n";
+		dis = fees[pair<int,int>(i, j)].calcFee(payment);
+	}
+
+	return dis;
+}
+
+
 
 std::string exec(const char* cmd) {
     char buffer[128];
@@ -330,6 +366,42 @@ std::string exec(const char* cmd) {
             result += buffer;
     }
     return result;
+}
+
+int PaymentDeployer::removeUsedCapacity(Tpath path){
+	for (auto f: path){
+		//std::cout << "Capa prima " << channels[pair<int,int>(f.first.first,f.first.second)]->resFundsA << "\n";
+		assert(channels.find(pair<int,int>(f.first.first,f.first.second))!=channels.end());
+		channels[pair<int,int>(f.first.first,f.first.second)]->resFundsA-=f.second;
+		//std::cout << "Capa dopo " << channels[pair<int,int>(f.first.first,f.first.second)]->resFundsA << "\n";
+
+	}
+}
+
+void convertPathsToFlows(vector<Tpath> paths, Tflows & flows){
+
+	for (int i=0; i<paths.size(); i++){
+		for (auto f: paths[i]){
+			flows[f.first.first][f.first.second] += f.second;
+		}
+	}
+}
+
+Tpath convertFlowsToPath(Tflows flows, int source, int destination){
+	Tpath path;
+
+	int curr=source;
+
+	while (curr!=destination){
+		for (int i=0; i<flows.size(); i++){
+				if (flows[curr][i]!=0){
+					path.push_back(Tpath_el(pair<int,int>(curr,i),flows[curr][i]));
+					curr=i;
+				}
+		}
+	}
+
+	return path;
 }
 
 #ifdef TESTPAYMENTDEPLOYER
