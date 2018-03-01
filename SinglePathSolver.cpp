@@ -44,7 +44,9 @@ int SinglePathSolver::constructPath(std::vector< std::vector<long> > & flow, lon
 	while ( curr->getNext() != 0){
 		long pay = round<long>(curr->getNext()->getPaymentToArrive());
 		flow[curr->getId()][curr->getNext()->getId()] = pay;
+#ifdef DEBUG
 		std::cerr << "flow[" << curr->getId() << ","<< curr->getNext()->getId() << "]=" << pay << "\n";
+#endif
 		fee+=curr->getDistance();
 		curr=curr->getNext();
 	}

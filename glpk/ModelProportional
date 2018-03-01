@@ -7,13 +7,21 @@ param r{a in N, b in N}, default 0;
 /* residual fund of p.c. (u,v) */ 
 
 param P;
-/* payment value to be made to destination */
+/* payment value to arrive to destination */
 
-var flow{a in N, b in N} >= 0;
+param numPaths >= 0;
+
+param lowbound{x in N, y in N, i in 1..numPaths} >=0;
+param upbound{x in N, y in N, i in 1..numPaths} >=0;
+
+
+param baseSendingFee{x in N, y in N} >=0;
+
+var flow{a in N, b in N, i in 1..numPaths} >= 0;
 /* variable expressing the amount paid by x to y */
 
-/* num segments */
 param feerate_perkw{a in N, b in N} integer >= 0;
+/* num segments */
 
 param source in N;
 /* source */
@@ -21,27 +29,32 @@ param source in N;
 param destination in N;
 /* destination */
 
-s.t. capcon{x in N, y in N}: flow[x,y] <= r[x,y];
+s.t. capcon{x in N, y in N}: sum{i in 1..numPaths} flow[x,y,i] <= r[x,y];
 /* capacity constraint */
 
-param lowbound{x in N, y in N} >=0;
+param linkused{x in N, y in N, i in 1..numPaths} binary, default 0;
 
-s.t. lowboundsst{x in N, y in N}: lowbound[x,y]<= flow[x,y];
+s.t. lowboundsst{x in N, y in N, i in 1..numPaths: r[x,y]>0}: lowbound[x,y,i] <= flow[x,y,i];
 
-s.t. flocon{a in N: a <> source and a <> destination}: sum{x in N} flow[x,a] =   
-sum{k in N}  flow[a,k]  + sum{k in N} ( flow[a,k] * feerate_perkw[a,k] ) / 1000;  
+s.t. upboundsst{x in N, y in N, i in 1..numPaths: r[x,y]>0}: upbound[x,y,i] >= flow[x,y,i];
+
+
+
+s.t. floconInter{a in N, i in 1..numPaths: a <> source and a <> destination}: sum{x in N} flow[x,a,i] =   
+sum{x in N}  flow[a,x,i]  + sum{x in N} ((  flow[a,x,i] * feerate_perkw[a,x]  ) / 1000 + linkused[a,x,i]*baseSendingFee[a,x]);   
 /* flow conservation constraint */
 
-s.t. endToEnd: sum{x in N: x <> source} flow[source,x]  - sum{x in N: x <> source} flow[x, source] = P 
-+ 	sum{x in N, y in N: x <> source} (flow[x,y] * feerate_perkw[x,y] ) /1000;   
 
-s.t. endToEnd2: sum{x in N: x <> destination} flow[x, destination] -  sum{x in N} flow[destination, x]  = P;
+s.t. endToEnd{i in 1..numPaths}: sum{x in N: x <> source} flow[source,x,i]  - sum{x in N: x <> source} flow[x, source,i] = 
+sum{x in N} flow[x,destination,i] - sum{x in N} flow[destination,x,i]  + 	sum{x in N, y in N: x <> source}(  (flow[x,y,i] * feerate_perkw[x,y] ) / 1000 + linkused[x,y,i]*baseSendingFee[x,y])  ;   
+
+
+s.t. endToEnd2: sum{x in N,i in 1..numPaths:  x <> destination} flow[x, destination, i] -  sum{x in N,i in 1..numPaths} flow[destination, x,i] = P; 
 /* end-to-end flow constraints */
 
-minimize cost: sum{x in N} flow[source,x];
+
+minimize cost: sum{x in N, i in 1..numPaths} flow[source,x,i];
 /* minimizing the amount of fees */
 
 end;
-
-
 

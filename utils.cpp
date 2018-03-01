@@ -59,3 +59,30 @@ vector<string> tokenize(string str)
 
     return result;
 }
+
+void printSolution(ostream & of, string title, vector<vector <long>> flows, long fee){
+	of << title << "\n";
+
+	of << "Total fees=" << fee << "\n";
+	for (int i=0; i<flows.size(); i++){
+		for (int j=0; j<flows.size(); j++){
+			if (flows[i][j]!=0)
+				of << "flows[" << i << "," << j << "]=" << flows[i][j] << ";\n";
+		}
+	}
+
+}
+
+void printSolution(ostream & of, string title, vector<Tpath> paths, long fee){
+	of << title << "\n";
+
+	of << "Total fees=" << fee << "\n";
+	for (auto pv: paths){
+		of << "Path: \n";
+		for (auto p: pv){
+			of << "flow[" << p.first.first << "," << p.first.second << "]=" << p.second << ";\n";
+		}
+	}
+
+}
+

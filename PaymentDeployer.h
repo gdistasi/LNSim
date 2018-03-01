@@ -15,6 +15,8 @@
 #include <cmath>
 #include <algorithm>
 
+#include "defs.h"
+
 using namespace std;
 
 extern string modelsDirectory;
@@ -23,11 +25,7 @@ string exec(const char* cmd);
 
 #define DBL_MAX std::numeric_limits<double>::max()
 
-// a path (i.e. in fact a flow allocation which can then also be multipath) and a fee
-typedef vector< pair< pair<int, int>, long > > Tpath;
-typedef pair< pair<int, int>, long > Tpath_el;
 
-typedef vector< vector<long> > Tflows;
 
 Tpath convertFlowsToPath(Tflows flows, int source, int destination);
 //Tpath convertFromPathToFlows(Tflows flows);
@@ -65,6 +63,8 @@ public:
 	double calcFee(int i, int j, double payment);
 
 	int removeUsedCapacity(Tpath path);
+	int removeChannels(Tpath path);
+
 
 
 

@@ -8,6 +8,7 @@
 #include "MultipathHeuristic.h"
 #include "glpk/PaymentDeployerProportional.h"
 #include "defs.h"
+#include "utils.h"
 
 MultipathHeuristic::~MultipathHeuristic() {
 	// TODO Auto-generated destructor stub
@@ -48,6 +49,8 @@ int  MultipathHeuristic::RunSolver( Tflows & flow, long & totalFee){
 				break;
 			}
 
+			printSolution(cout, string("Solution for path ") + to_string(i) + " of " + to_string(k), flows, fee);
+
 
 			//std::cout << "Adding fee " <<fee << "\n";
 			tFees+=fee;
@@ -56,16 +59,17 @@ int  MultipathHeuristic::RunSolver( Tflows & flow, long & totalFee){
 
 			paths.push_back(path);
 
-			sp.removeUsedCapacity(path);
-
+			//sp.removeUsedCapacity(path);
+			sp.removeChannels(path);
 
 
 		}
 
-		if (optimizationStep) {
+		if (k>1 && success && optimizationStep) {
 
-				PaymentDeployerProportional pdp(numNodes, payment, source, destination);
+				PaymentDeployerProportional pdp(numNodes, payment, source, destination, k);
 
+				int pathN=1;
 				for (auto pv: paths){
 					for (auto p: pv){
 						int from=p.first.first;
@@ -78,7 +82,7 @@ int  MultipathHeuristic::RunSolver( Tflows & flow, long & totalFee){
 							vector< long> functionPoints = getFee(from,to).starting_points;
 
 							int i=0;
-							while ( functionPoints[i] <= p.second ){
+							while (functionPoints[i] <= p.second){
 								i++;
 							}
 
@@ -86,19 +90,48 @@ int  MultipathHeuristic::RunSolver( Tflows & flow, long & totalFee){
 							coeff.push_back(getFee(from,to).coefficients[i-1]);
 
 							vector<long> voidV;
-							pdp.AddPaymentChannel(from,to, functionPoints[i],0, 0, voidV,  coeff);
-							pdp.setLowerBound(from,to,functionPoints[i-1]);
+							pdp.AddPaymentChannel(from,to, functionPoints[i],0, getFee(from,to).baseFee , voidV,  coeff);
+
+							if (functionPoints[i-1]>0){
+								pdp.setLowerBound(from,to,pathN,functionPoints[i-1]);
+								std::cout << "Setting lower bound between " << from << " and  " << to << " of path " << pathN << " to " << functionPoints[i-1] << "\n";
+							}
+							else
+							{
+								// the link must be used
+								std::cout << "Setting lower bound between " << from << " and  " << to << " of path " << pathN << " to " << 1 << "\n";
+								pdp.setLowerBound(from,to,pathN,1);
+							}
+							std::cout << "Setting upper bound between " << from << " and  " << to << " of path " << pathN << " to " << functionPoints[i] << "\n";
+
+							pdp.setUpperBound(from,to,pathN,functionPoints[i]);
+
 						}
 
+
 					}
+					pathN++;
+
 				}
 
-				Tflows flowOpt(numNodes, vector<long>(numNodes));
+				for (int i=1; i<=k; i++){
+					for (int x=0; x<numNodes; x++)
+						for (int y=0; y<numNodes; y++){
+							if (pdp.getLowerBound(x,y,i)==0){
+								pdp.setUpperBound(x,y,i,0);
+							}
+						}
+				}
+
+
+				//Tflows flowOpt(numNodes, vector<long>(numNodes));
+
+				vector<Tpath> paths;
 				long feeOpt=0;
 
-				if (pdp.RunSolver(flowOpt, feeOpt)==0){
+				if (pdp.RunSolver(paths, feeOpt)==0){
 
-					long baseFees=0;
+					/*long baseFees=0;
 					for (auto pv: paths){
 						for (auto p: pv){
 							int from=p.first.first;
@@ -107,14 +140,18 @@ int  MultipathHeuristic::RunSolver( Tflows & flow, long & totalFee){
 							if (from != source)
 								baseFees += fees[pair<int,int>(from,to)].baseFee;
 						}
-					}
+					}*/
 
-					if (feeOpt+baseFees < tFees){
-						std::cout << "Optimization step improved the solution. " << feeOpt+baseFees << " vs " << tFees << " \n";
+					printSolution(cout, "Solution after optimization" , paths, feeOpt);
+
+
+					if (feeOpt < tFees){
+						std::cout << "Optimization step improved the solution. " << feeOpt << " vs " << tFees << " \n";
 						//paths = convertFlowsToPaths(flowOpt, source, destination);
 					} else {
-						std::cout << "Optimization step has not improved the solution. " << feeOpt+baseFees << " vs " << tFees << " \n";
+						std::cout << "Optimization step has not improved the solution. " << feeOpt << " vs " << tFees << " \n";
 					}
+
 				} else {
 					std::cerr<<"Optimization step failed.  \n";
 					exit(1);

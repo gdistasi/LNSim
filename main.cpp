@@ -12,11 +12,14 @@
 #include <stdio.h>
 #include "Statistics.h"
 
+#include <typeinfo>
+
 #include "SinglePathSolver.h"
 #include "MultipathHeuristic.h"
 
 #include <getopt.h>
 #include "glpk/PaymentDeployerMultipathExact.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -64,6 +67,7 @@ void checkPayment(std::vector<std::vector<ln_units>> flows, ln_units pay, ln_uni
 
 
 
+
 int main(int argc, char * * argv){
 
 	int seed=0.1;
@@ -93,7 +97,7 @@ int main(int argc, char * * argv){
 	long feerate_high=30;
 
 	/* in satoshis */
-	ln_units baseFee=1;
+	//ln_units baseFee=1;
 
 	int maxPayments=1;
 	string networkFile="";
@@ -389,6 +393,9 @@ int main(int argc, char * * argv){
 
 					stats.successes++;
 					stats.feesPaid+=fee;
+
+					printSolution(cout, string("Solution given by ") + typeid(*pd).name(), flows, fee);
+
         } else {
 					std::cerr<<"Unsuccess!\n";
 					stats.fails+=1;

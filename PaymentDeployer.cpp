@@ -378,6 +378,16 @@ int PaymentDeployer::removeUsedCapacity(Tpath path){
 	}
 }
 
+int PaymentDeployer::removeChannels(Tpath path){
+	for (auto f: path){
+		//std::cout << "Capa prima " << channels[pair<int,int>(f.first.first,f.first.second)]->resFundsA << "\n";
+		assert(channels.find(pair<int,int>(f.first.first,f.first.second))!=channels.end());
+		channels[pair<int,int>(f.first.first,f.first.second)]->resFundsA=0;
+		//std::cout << "Capa dopo " << channels[pair<int,int>(f.first.first,f.first.second)]->resFundsA << "\n";
+
+	}
+}
+
 void convertPathsToFlows(vector<Tpath> paths, Tflows & flows){
 
 	for (int i=0; i<paths.size(); i++){
