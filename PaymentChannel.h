@@ -23,7 +23,7 @@ public:
 
 	virtual ~PaymentChannel();
 
-	double getResidualFundsA() const {
+	long getResidualFundsA() const {
 		return residualFundsA;
 	}
 
@@ -31,7 +31,7 @@ public:
 		this->residualFundsA = residualFundsA;
 	}
 
-	double getResidualFundsB() const {
+	long getResidualFundsB() const {
 		return residualFundsB;
 	}
 

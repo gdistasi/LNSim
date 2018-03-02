@@ -209,4 +209,10 @@ void LightningNetwork::addPaymentChannel(PaymentChannel * pc, int idA, int idB){
 	}
 }
 
-
+void LightningNetwork::dumpTopology(ostream& of) {
+	of << nodes.size() << "\n";
+	for (auto ch: channels){
+		of << ch->getEndPointA()->getId() << " " << ch->getEndPointB()->getId() << " " << ch->getResidualFundsA()/1000 << " " <<
+				ch->getResidualFundsB()/1000 << "\n";
+	}
+}

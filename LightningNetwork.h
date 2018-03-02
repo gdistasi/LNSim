@@ -52,6 +52,7 @@ public:
 	void addPaymentChannel(PaymentChannel * pc, int idA, int idB);
 	PaymentChannel * getChannel(int idA, int idB);
 
+	void dumpTopology(ostream & of);
 
 	friend class NetworkGenerator;
 	friend class NetworkGeneratorFromFile;

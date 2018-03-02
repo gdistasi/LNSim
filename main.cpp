@@ -71,8 +71,8 @@ void checkPayment(std::vector<std::vector<ln_units>> flows, ln_units pay, ln_uni
 int main(int argc, char * * argv){
 
 	int seed=0.1;
-	ln_units meanSizePayments=1000 * 1000;
-	double variancePayments=500;
+	ln_units meanSizePayments=1000000;
+	double variancePayments=500000;
 	double intervalPayments=1;
 	double totalTime=60; //one day
 	int numNodes=2;
@@ -83,8 +83,8 @@ int main(int argc, char * * argv){
 	ln_units minFund=0.01 * MILLISATOSHIS_IN_BTC;
 	ln_units maxFund=0.167 * MILLISATOSHIS_IN_BTC;
 
-	double sendingFee=1000 ;
-	double receivingFee=0;
+	//double sendingFee=1000 ;
+	//double receivingFee=0;
 	//double positiveSlope=sendingFee;
 	//double negativeSlope=sendingFee*0.01;
 
@@ -137,6 +137,7 @@ int main(int argc, char * * argv){
 			  {"maxPayments", required_argument, 0, 'P'},
 			  {"networkFromFile", required_argument, 0, 'N'},
 			  {"paymentsFromFile", required_argument, 0, 'Q'},
+			  {"baseFee", required_argument, 0, 'B'},
 			  {"feerateLow", required_argument, 0, 'l'},
 			  {"feerateHigh", required_argument, 0, 'h'},
 			  {"heuristicOptimization", required_argument, 0, 'O'},
@@ -169,6 +170,11 @@ int main(int argc, char * * argv){
 	        case 's':
 	        	meanSizePayments=atof(optarg);
 	        	break;
+
+	        case 'B':
+	       	  	basefee=atoi(optarg);
+	       	  	break;
+
 
 	        case 'P':
 	  	        	maxPayments=atoi(optarg);
@@ -284,7 +290,7 @@ int main(int argc, char * * argv){
 
 	LightningNetwork * net=0;
 
-	std::cerr << "All values are expressed in millisatoshis. Input files are in satoshis.\n";
+	std::cerr << "All values are expressed in millisatoshis. Input files (only) must be in satoshis.\n";
 	std::cerr << "Generating network...\n";
 
 	if (networkFile!=""){
@@ -294,7 +300,7 @@ int main(int argc, char * * argv){
 	}
 
 	if (feePolicy = GENERAL_OPTIMIZED){
-		net=NetworkGenerator::generateOptimizedFee(net, sendingFee ,
+		net=NetworkGenerator::generateOptimizedFee(net, basefee ,
 													  feerate_high , feerate_low, seed);
 	} else {
 //		net = new NetworkGenerator::generate(numNodes, connectionProbability, minFund, maxFund, sendingFee,
@@ -304,6 +310,10 @@ int main(int argc, char * * argv){
 	}
 
 	std::cerr << "Done.\n";
+
+	std::cerr << "Topology: \n";
+
+	net->dumpTopology(cout);
 
 	std::cerr << "Initial funds: " << net->totalFunds() << std::endl;
 
@@ -372,7 +382,7 @@ int main(int argc, char * * argv){
         }
 
 
-        if (amount==0) break;
+       // if (amount==0) break;
 
         pd->setAmount(amount);
 
