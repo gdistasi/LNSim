@@ -254,8 +254,8 @@ bool LightningNetwork::hasEnoughFunds(ln_units amount, int source, int paymentMe
 void LightningNetwork::dumpTopology(ostream& of) {
 	of << nodes.size() << "\n";
 	for (auto ch: channels){
-		of << ch->getEndPointA()->getId() << " " << ch->getEndPointB()->getId() << " " << ((double)ch->getResidualFundsA()) / MILLISATOSHIS_IN_BTC << "btc " <<
-				((double)ch->getResidualFundsB()) / MILLISATOSHIS_IN_BTC << "btc\n";
+		of << ch->getEndPointA()->getId() << " " << ch->getEndPointB()->getId() << " " << ch->getResidualFundsA() << " " <<
+				ch->getResidualFundsB() << "\n";
 	}
 }
 

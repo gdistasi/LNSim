@@ -268,10 +268,10 @@ LightningNetwork *  NetworkGenerator::generateBaseFromFile(string filename){
 	long capA,capB;
 
 	while (	getline (fpOut,line)){
-		from = convertTo ( tokenize(line)[0]  );
-		to = convertTo( tokenize(line)[1]  );
-		capA = convertTo( tokenize(line)[2]  ) * 1000;
-		capB = convertTo( tokenize(line)[3]  ) * 1000;
+		from = convertTo (tokenize(line)[0]);
+		to = convertTo( tokenize(line)[1]);
+		capA = convertTo( tokenize(line)[2]) ;
+		capB = convertTo( tokenize(line)[3]);
 
 		PaymentChannel * pc = new PaymentChannel(net->nodes[from], net->nodes[to], capA, capB);
 

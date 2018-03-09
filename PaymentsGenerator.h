@@ -48,7 +48,7 @@ class NormalSizePoissonTimePaymentGenerator : public PaymentsGenerator {
 public:
 
 	NormalSizePoissonTimePaymentGenerator(int numNodesT, int numSources, int numReceivers, int seedT,
-										  double meanT, double varianceT, double intervalT, set<int> toAvoid);
+										  double meanT, double varianceT, double intervalT, set<int> toAvoid = set<int>());
 
 	virtual void getNext(ln_units & amount, double & time, int & source, int & destination);
 
@@ -61,6 +61,8 @@ public:
 
 protected:
 	std::default_random_engine generator;
+	std::default_random_engine generatorTime;
+
 	std::normal_distribution<double> * size_dist;
 	std::exponential_distribution<double>  * time_dist;
 	std::uniform_int_distribution<int> * node_dist;

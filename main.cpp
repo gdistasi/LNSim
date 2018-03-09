@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "Statistics.h"
-
+#include <limits>
 #include <typeinfo>
 
 #include "SinglePathSolver.h"
@@ -74,7 +74,7 @@ int main(int argc, char * * argv){
 	ln_units meanSizePayments=1000000;
 	double variancePayments=500000;
 	double intervalPayments=1;
-	double totalTime=60; //one day
+	double totalTime=std::numeric_limits<double>::max();
 	int numNodes=2;
 	int numSources=1;
 	int numDestinations=1;
@@ -99,9 +99,16 @@ int main(int argc, char * * argv){
 	/* in satoshis */
 	//ln_units baseFee=1;
 
-	int maxPayments=1;
+
+	int maxPayments=std::numeric_limits<int>::max();
 	string networkFile="";
 	string paymentsFile="";
+
+	bool createPaymentsFile=false;
+	bool createNetworkFile=false;
+	string paymentsFileToCreate;
+	string networkFileToCreate;
+
 
 
 	int averageNumSlopes=3;
@@ -138,13 +145,15 @@ int main(int argc, char * * argv){
 			  {"paymentMethod", required_argument, 0, 'p'},
 			  {"numPaths", required_argument, 0, 'R'},
 			  {"maxPayments", required_argument, 0, 'P'},
-			  {"networkFromFile", required_argument, 0, 'N'},
-			  {"paymentsFromFile", required_argument, 0, 'Q'},
+			  {"networkFile", required_argument, 0, 'N'},
+			  {"paymentsFile", required_argument, 0, 'Q'},
 			  {"baseFee", required_argument, 0, 'B'},
 			  {"feerateLow", required_argument, 0, 'l'},
 			  {"feerateHigh", required_argument, 0, 'h'},
 			  {"heuristicOptimization", required_argument, 0, 'O'},
 			  {"logFile", required_argument, 0, 'L'},
+			  {"makePaymentsFile", required_argument, 0, 'a'},
+			  {"makeNetworkFile", required_argument, 0, 'A'},
 			  {"seed",   required_argument, 0, 'S'},
 
 	          {0, 0, 0, 0}
@@ -170,6 +179,16 @@ int main(int argc, char * * argv){
 	           // printf (" with arg %s", optarg);
 	          //printf ("\n");
 	          break;
+
+	        case 'A':
+	   	        	networkFileToCreate=string(optarg);
+	   	        	createNetworkFile=true;
+	   	        	break;
+	        case 'a':
+	        		paymentsFileToCreate=string(optarg);
+	   	        	createPaymentsFile=true;
+	   	        	break;
+
 
 	        case 's':
 	        	meanSizePayments=atof(optarg);
@@ -297,14 +316,17 @@ int main(int argc, char * * argv){
 	        }
 	    }
 
+
+
 	LightningNetwork * net=0;
 
-	std::cerr << "All values are expressed in millisatoshis when unit is not specified. Input files (only) must be in satoshis.\n";
-	std::cerr << "Generating network...\n";
+	std::cerr << "All values are expressed in millisatoshis when the unit is not specified.\n";
 
 	if (networkFile!=""){
+		std::cerr << "Reading network from file...\n";
 		net = NetworkGenerator::generateBaseFromFile(networkFile);
 	} else {
+		std::cerr << "Generating network...\n";
 		net = NetworkGenerator::generateBase(numNodes, connectionProbability, minFund, maxFund, seed);
 	}
 
@@ -320,7 +342,6 @@ int main(int argc, char * * argv){
 
 	std::cerr << "Done.\n";
 
-	std::cerr << "Topology: \n";
 
 	set<int> toAvoid;
 
@@ -339,6 +360,7 @@ int main(int argc, char * * argv){
 		//exit(1);
 	}
 
+	std::cerr << "Topology: \n";
 	net->dumpTopology(cout);
 
 	std::cerr << "Initial funds: " << net->totalFunds() << std::endl;
@@ -352,6 +374,8 @@ int main(int argc, char * * argv){
 										  seed, meanSizePayments, variancePayments, intervalPayments, toAvoid);
 	}
 
+
+
 	double time;
 	ln_units amount;
 	int src,dst;
@@ -359,6 +383,28 @@ int main(int argc, char * * argv){
 	long initFunds = net->totalFunds();
 
 	Stats stats;
+
+
+	if (createPaymentsFile){
+			int numPayments=0;
+			ofstream file;
+			file.open(paymentsFileToCreate);
+			while (numPayments<=maxPayments){
+				paymGen->getNext(amount,time,src,dst);
+				file << time << " " << amount << " " << src << " " << dst << "\n";
+				numPayments++;
+			}
+			file.close();
+			exit(0);
+	}
+
+	if (createNetworkFile){
+		ofstream file;
+		file.open(networkFileToCreate);
+		net->dumpTopology(file);
+		file.close();
+		exit(0);
+	}
 
 	logFileO.open(logFile);
 
@@ -394,7 +440,7 @@ int main(int argc, char * * argv){
 
         PaymentDeployer * pd;
         
-        if (    resMethod==ResolutionMethod::EXACT && payMethod == PaymentMethod::MULTIPATH ) {
+        if (resMethod==ResolutionMethod::EXACT && payMethod == PaymentMethod::MULTIPATH ) {
             pd = new PaymentDeployerMultipathExact(net->getNumNodes(), amount, src, dst);
         } else if (resMethod==ResolutionMethod::EXACT &&  payMethod == PaymentMethod::SINGLEPATH ) {
             pd = new SinglePathSolver(net->getNumNodes(), amount, src, dst);

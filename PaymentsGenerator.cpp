@@ -16,7 +16,7 @@ using namespace std;
 
 NormalSizePoissonTimePaymentGenerator::NormalSizePoissonTimePaymentGenerator(int numNodesT, int numSources, int numReceivers, int seedT,
 										  double meanT, double varianceT, double intervalT, set<int> toAvoid):
-											  generator(seedT){
+											  generator(seedT),generatorTime(seedT){
 
 		numNodes=numNodesT;
 		sources=numSources;
@@ -26,7 +26,6 @@ NormalSizePoissonTimePaymentGenerator::NormalSizePoissonTimePaymentGenerator(int
 
 		size_dist = new std::normal_distribution<double>(meanT,varianceT);
 		time_dist = new std::exponential_distribution<double>(intervalT);
-		//node_dist = new std::uniform_int_distribution<int>(0, numNodesT-1);
 		source_dist = new std::uniform_int_distribution<int>(0, numSources-1);
 		destination_dist = new std::uniform_int_distribution<int>(0, numReceivers-1);
 
@@ -105,7 +104,7 @@ NormalSizePoissonTimePaymentGenerator::NormalSizePoissonTimePaymentGenerator(int
 void NormalSizePoissonTimePaymentGenerator::getNext(ln_units& amount,
 		double& time, int& source, int& destination) {
 
-	 double interv = time_dist->operator() (generator);
+	 double interv = time_dist->operator() (generatorTime);
 	 time = last_time + interv;
 
 	 last_time = time;
@@ -152,8 +151,8 @@ void PaymentGeneratorFromFile::getNext(ln_units& amount,
 
 	if (getline(*fpOut, line)) {
 
-		amount = convertTo(tokenize(line)[0]) * 1000;
-		time = convertToDouble(tokenize(line)[1]);
+		time = convertToDouble(tokenize(line)[0]);
+		amount = convertTo(tokenize(line)[1]);
 		source = convertTo(tokenize(line)[2]);
 		destination = convertTo(tokenize(line)[3]);
 
