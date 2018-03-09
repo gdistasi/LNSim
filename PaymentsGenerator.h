@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <set>
 #include "defs.h"
 
 using namespace std;
@@ -25,12 +26,16 @@ public:
 	virtual ~PaymentsGenerator(){};
 	virtual void getNext(ln_units & amount, double & time, int & source, int & destination)=0;
 
+	//nodes to not be selected as sources or destinations
+	//virtual void toAvoid(set<int> s)=0;
+
 };
 
 class PaymentGeneratorFromFile: public PaymentsGenerator {
 public:
 	PaymentGeneratorFromFile(std::string filename);
 	virtual void getNext(ln_units & amount, double & time, int & source, int & destination);
+	//virtual void toAvoid(set<int> s);
 	virtual ~PaymentGeneratorFromFile();
 
 private:
@@ -43,7 +48,7 @@ class NormalSizePoissonTimePaymentGenerator : public PaymentsGenerator {
 public:
 
 	NormalSizePoissonTimePaymentGenerator(int numNodesT, int numSources, int numReceivers, int seedT,
-										  double meanT, double varianceT, double intervalT);
+										  double meanT, double varianceT, double intervalT, set<int> toAvoid);
 
 	virtual void getNext(ln_units & amount, double & time, int & source, int & destination);
 
@@ -64,12 +69,12 @@ protected:
 
 	double last_time;
 
-	vector<int> senders,receivers;
+	set<int> senders,receivers;
+	//set<int> toAvoid;
 
 	int numNodes;
 	int sources;
 	int destinations;
-	double seed;
 	double minAmount;
 };
 

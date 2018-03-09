@@ -207,12 +207,123 @@ void LightningNetwork::addPaymentChannel(PaymentChannel * pc, int idA, int idB){
 			mapCh.insert(std::map<std::pair<PaymentChannelEndPoint *,PaymentChannelEndPoint *>,PaymentChannel *>::value_type(
 			std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>(nodes[idB],nodes[idA]),pc));
 	}
+
+	channelsByNode[idA].push_back(pc);
+	channelsByNode[idB].push_back(pc);
+
+}
+
+double LightningNetwork::averageImbalance() {
+
+	double imb=0;
+	int numCh=0;
+
+	for (auto ch: channels){
+		imb = imb +  abs( ch->getResidualFundsA() - ch->getResidualFundsB() ) /2 ;
+		numCh++;
+	}
+
+	return imb/this->totalFunds();
+
+}
+
+bool LightningNetwork::hasEnoughFunds(ln_units amount, int source, int paymentMethod) {
+	bool has=false;
+
+	vector<PaymentChannel *> pcs = channelsByNode[source];
+
+	if (paymentMethod==PaymentMethod::SINGLEPATH){
+		for (auto pc: pcs){
+			if (pc->resFunds(source) >= amount){
+				has=true;
+			}
+		}
+	} else {
+		ln_units sum=0;
+		for (auto pc: pcs){
+				sum+=pc->resFunds(source);
+		}
+		has = sum>=amount;
+
+	}
+
+	return has;
+
 }
 
 void LightningNetwork::dumpTopology(ostream& of) {
 	of << nodes.size() << "\n";
 	for (auto ch: channels){
-		of << ch->getEndPointA()->getId() << " " << ch->getEndPointB()->getId() << " " << ch->getResidualFundsA()/1000 << " " <<
-				ch->getResidualFundsB()/1000 << "\n";
+		of << ch->getEndPointA()->getId() << " " << ch->getEndPointB()->getId() << " " << ((double)ch->getResidualFundsA()) / MILLISATOSHIS_IN_BTC << "btc " <<
+				((double)ch->getResidualFundsB()) / MILLISATOSHIS_IN_BTC << "btc\n";
 	}
+}
+
+ln_units LightningNetwork::minFunds() {
+
+	ln_units min=channels[0]->getResidualFundsA();
+
+	for (auto pc:channels){
+		if (pc->getResidualFundsA() < min)
+			min = pc->getResidualFundsA();
+		if (pc->getResidualFundsB() < min)
+				min = pc->getResidualFundsB();
+	}
+
+	return min;
+
+}
+
+ln_units LightningNetwork::maxFunds() {
+	ln_units max=channels[0]->getResidualFundsA();
+
+		for (auto pc:channels){
+			if (pc->getResidualFundsA() > max)
+				max = pc->getResidualFundsA();
+			if (pc->getResidualFundsB() < max)
+					max = pc->getResidualFundsB();
+		}
+
+		return max;
+}
+
+void LightningNetwork::connect(int seed) {
+
+	/*std::uniform_int_distribution<int> node_dist(0, nodes.size()-1);
+
+	for (int i=0; i<vis.size(); i++){
+		if (!vis[i]){
+
+
+		}
+	}
+*/
+
+}
+
+
+void LightningNetwork::dfs(PaymentChannelEndPoint* v) {
+    if (vis[v->getId()]) //don't visit the same node twice
+        return;
+    vis[v->getId()]=true;
+    for (auto neigh: channelsByNode[v->getId()]){  //DFS to all the neighbors
+    	PaymentChannelEndPoint * u = neigh->getEndPointA() == v ? neigh->getEndPointB() : neigh->getEndPointA();
+    	if (!vis[u->getId()]) //check if you visited it before
+            dfs(u);
+    }
+}
+
+bool LightningNetwork::connected() {
+	vis.resize(nodes.size());
+	for (auto b: vis)
+		b=false;
+
+	dfs(nodes[0]);
+
+	for (auto n: nodes){
+	        if (!vis[n->getId()]) //DFS did not reach this node
+	            return false;
+	}
+
+	return true;
 }

@@ -22,13 +22,13 @@ public:
 
 
 	static LightningNetwork * generateBase(int numNodes, double connectionProbability,
-														   double minFund, double maxFund, double seed);
+														   double minFund, double maxFund, int seed);
 
 	static LightningNetwork * generateBaseFromFile(std::string filename);
 
 	static LightningNetwork * generateOptimizedFee(LightningNetwork * baseNet,
 														   long baseSendingFee_inMilliSatoshi,
-														   double shigh, double slow, double seed);
+														   double shigh, double slow, int seed);
 
 
 

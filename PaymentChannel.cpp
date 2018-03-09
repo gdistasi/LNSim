@@ -8,6 +8,7 @@
 #include "PaymentChannel.h"
 #include "LightningNetwork.h"
 #include <iostream>
+#include <cassert>
 #include <cmath>
 #include <iomanip>
 #include "defs.h"
@@ -113,4 +114,10 @@ long PaymentChannel::getBaseFee(bool reverse){
 	return feeCalc->getBaseFee(residualFundsA, residualFundsB);
 }
 
+ln_units PaymentChannel::resFunds(int id) {
+	assert(id==this->A->getId() || id==this->B->getId());
 
+	if (A->getId()==id) return this->residualFundsA;
+	else return residualFundsB;
+
+}

@@ -34,11 +34,11 @@ NetworkGenerator::~NetworkGenerator() {
 
 LightningNetwork * NetworkGenerator::generateOptimizedFee(LightningNetwork * baseNet,
 													   long baseSendingFee_inMilliSatoshi,
-													   double shigh, double slow, double seed){
+													   double shigh, double slow, int seed){
 
 	LightningNetwork * net = baseNet;
 
-	//std::cerr << "Num channels " << net->getChannels().size() << "\n";
+	std::cerr << "Num channels " << net->getChannels().size() << "\n";
 
 	for (PaymentChannel * ch: net->getChannels()){
 		ch->setFeeCalculator(new FeeCalculatorOptimized(baseSendingFee_inMilliSatoshi, slow,shigh));
@@ -81,6 +81,7 @@ LightningNetwork * NetworkGenerator::generate(int numNodes, double connProb,
 				for (int j=i+1; j<numNodes; j++){
 					//if (i==j) continue;
 					double prob=dist(generator);
+
 
 					if (prob<connProb){
 
@@ -192,7 +193,7 @@ bool isConnected(LightningNetwork & net){
 
 
 
-LightningNetwork * NetworkGenerator::generateBase(int numNodes, double connProb, double minFund, double maxFund, double seed){
+LightningNetwork * NetworkGenerator::generateBase(int numNodes, double connProb, double minFund, double maxFund, int seed){
 
 		LightningNetwork * net= new LightningNetwork();
 
@@ -214,7 +215,13 @@ LightningNetwork * NetworkGenerator::generateBase(int numNodes, double connProb,
 						//if (i==j) continue;
 						double prob=dist(generator);
 
+						//std::cerr << "PROB" << prob << " connprob " << connProb << "\n";
+
+
 						if (prob<connProb){
+
+							//std::cerr << "OK " << i << " " << j << "\n";
+
 							pc = new PaymentChannel(net->nodes[i], net->nodes[j],
 																mytrunc(dist_funds(generator)), mytrunc(dist_funds(generator)));
 

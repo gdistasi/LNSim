@@ -9,8 +9,8 @@ using namespace std;
 
 #define SATOSHI 1e-8
 #define MINIMUM_UNIT SATOSHI
-#define SATOSHIS_IN_BTC 100000000
-#define MILLISATOSHIS_IN_BTC SATOSHIS_IN_BTC * 1000
+const long SATOSHIS_IN_BTC = 100000000;
+const long MILLISATOSHIS_IN_BTC = SATOSHIS_IN_BTC * 1000;
 
 // a path (i.e. in fact a flow allocation which can then also be multipath) and a fee
 typedef vector< pair< pair<int, int>, long > > Tpath;

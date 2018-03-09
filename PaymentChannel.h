@@ -35,6 +35,8 @@ public:
 		return residualFundsB;
 	}
 
+	ln_units resFunds(int id);
+
 	void setResidualFundsB(ln_units residualFundsB) {
 		this->residualFundsB = residualFundsB;
 	}

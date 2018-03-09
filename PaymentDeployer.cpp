@@ -335,6 +335,12 @@ double PaymentDeployer::PiecewiseLinearFee::calcFee(long payment){
 /* calc the distance from i to j: the amount of fee required to carry the payment P from i to j */
 double PaymentDeployer::calcFee(int i, int j, double payment){
 
+
+	if (i==j){
+		std::cerr << "i equal to j " << i << " " << j << "\n";
+
+	}
+
 	//vector<PaymentChannel *> chs = channelsByNode[i];
 	assert(i!=j);
 

@@ -112,7 +112,10 @@ int  SinglePathSolver::RunSolver( std::vector< std::vector<long> > & flow, long 
 			}
 		}
 
-		if (minDis == DBL_MAX) return 1;
+		if (minDis == DBL_MAX) {
+			//checkGraphIsConnected();
+			return 1;
+		}
 
 		//add the nearest to the visited set and erase from the non_visited
 		visited.push_back(nearest);
@@ -125,8 +128,8 @@ int  SinglePathSolver::RunSolver( std::vector< std::vector<long> > & flow, long 
 
 	}
 
-	if (!sourceReached) return 1;
-	else return constructPath(flow, totalFee, nodes);
+	assert(sourceReached);
+	return constructPath(flow, totalFee, nodes);
 
 
 }

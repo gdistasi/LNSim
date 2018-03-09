@@ -43,9 +43,13 @@ public:
 		return channels;
 	}
 
+	double averageImbalance();
+
 	const std::vector<PaymentChannelEndPoint*>& getNodes() const {
 		return nodes;
 	}
+
+	bool hasEnoughFunds(ln_units amount, int source, int  paymentMethod);
 
 	void makePayments(std::vector<std::vector<ln_units>> );
 
@@ -54,18 +58,30 @@ public:
 
 	void dumpTopology(ostream & of);
 
+	ln_units minFunds();
+	ln_units maxFunds();
+
+	bool connected();
+	void connect(int seed);
+
 	friend class NetworkGenerator;
 	friend class NetworkGeneratorFromFile;
 
 
 
+	//used to check if graph is connected
+	vector<bool> vis;
+
 protected:
 
+	void dfs(PaymentChannelEndPoint * v);
 
 
 	std::vector<PaymentChannelEndPoint *> nodes;
 	std::vector<PaymentChannel *> channels;
+	std::map<int, vector<PaymentChannel *> > channelsByNode;
 	std::map<std::pair<PaymentChannelEndPoint *, PaymentChannelEndPoint *>, PaymentChannel *> mapCh;
+
 
 
 

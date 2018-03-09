@@ -70,7 +70,7 @@ void checkPayment(std::vector<std::vector<ln_units>> flows, ln_units pay, ln_uni
 
 int main(int argc, char * * argv){
 
-	int seed=0.1;
+	int seed=0;
 	ln_units meanSizePayments=1000000;
 	double variancePayments=500000;
 	double intervalPayments=1;
@@ -112,6 +112,9 @@ int main(int argc, char * * argv){
     FeeType feePolicy=FeeType::GENERAL;
     PaymentMethod payMethod=PaymentMethod::SINGLEPATH;
 
+    string logFile="log";
+    ofstream logFileO;
+
     bool hOptimization=true;
 
 	//handling of options
@@ -141,6 +144,7 @@ int main(int argc, char * * argv){
 			  {"feerateLow", required_argument, 0, 'l'},
 			  {"feerateHigh", required_argument, 0, 'h'},
 			  {"heuristicOptimization", required_argument, 0, 'O'},
+			  {"logFile", required_argument, 0, 'L'},
 			  {"seed",   required_argument, 0, 'S'},
 
 	          {0, 0, 0, 0}
@@ -183,6 +187,11 @@ int main(int argc, char * * argv){
 	        case 'N':
 	    	  	    networkFile=string(optarg);
 	    	  	    break;
+
+	        case 'L':
+	       	    	  	    logFile=string(optarg);
+	       	    	  	    break;
+
 	        case 'R':
    	    	  	    numPaths=atoi(optarg);
   	    	  	    break;
@@ -232,7 +241,7 @@ int main(int argc, char * * argv){
 	        	modelsDirectory=string(optarg);
 	        	break;
 	        case 'S':
-	        	seed=atof(optarg);
+	        	seed=atoi(optarg);
 	        	break;
 
 	        case 'q':
@@ -290,7 +299,7 @@ int main(int argc, char * * argv){
 
 	LightningNetwork * net=0;
 
-	std::cerr << "All values are expressed in millisatoshis. Input files (only) must be in satoshis.\n";
+	std::cerr << "All values are expressed in millisatoshis when unit is not specified. Input files (only) must be in satoshis.\n";
 	std::cerr << "Generating network...\n";
 
 	if (networkFile!=""){
@@ -313,6 +322,23 @@ int main(int argc, char * * argv){
 
 	std::cerr << "Topology: \n";
 
+	set<int> toAvoid;
+
+	if (!net->connected()){
+
+		std::cerr << "Graph is not connected!\n";
+		return 1;
+
+		for (int i=0; i<net->vis.size(); i++){
+			if (!net->vis[i]){
+				std::cerr << "Node " << i << " not connected.\n";
+				toAvoid.insert(i);
+			}
+		}
+
+		//exit(1);
+	}
+
 	net->dumpTopology(cout);
 
 	std::cerr << "Initial funds: " << net->totalFunds() << std::endl;
@@ -323,7 +349,7 @@ int main(int argc, char * * argv){
 		paymGen = new PaymentGeneratorFromFile(paymentsFile);
 	} else {
 		paymGen = new NormalSizePoissonTimePaymentGenerator(net->getNumNodes(), numSources, numDestinations,
-										  seed, meanSizePayments, variancePayments, intervalPayments);
+										  seed, meanSizePayments, variancePayments, intervalPayments, toAvoid);
 	}
 
 	double time;
@@ -334,17 +360,37 @@ int main(int argc, char * * argv){
 
 	Stats stats;
 
+	logFileO.open(logFile);
+
+	logFileO << "time amount src dst successes fails "
+				 << "acceptRatio averageImbalance averagePathLength averageFee feesPaid minFunds maxFunds\n";
+
+
 	do {
 
 		net->checkResidualFunds();
 
+		long fee=0;
+		long transferredAmount=0;
+		bool success=false;
+		ln_units totalFee=0;
+
+		std::vector<std::vector<ln_units>> flows(net->getNumNodes(), vector<ln_units
+        		>(net->getNumNodes()));
+
 		std::cerr << "Getting next payment info...";
 		paymGen->getNext(amount,time,src,dst);
 
-		stats.numPayments+=1;
-		std::cerr << "Processing next payment - amount: " << amount << " time: " << time << " Src: " << src << " Dst: " << dst << "\n";
+		std::cerr << "Processing next payment - amount: " << ((double)amount)/MILLISATOSHIS_IN_BTC << "btc time: " << time << "s Src: " << src << " Dst: " << dst << "\n";
 
-		ln_units totalFee=0;
+		if (!net->hasEnoughFunds(amount,src,payMethod)){
+			std::cerr << "Source has not enough funds\n";
+			stats.notEnoughFundsSource++;
+			goto nextpay;
+		}
+
+		stats.numPayments+=1;
+
 
         PaymentDeployer * pd;
         
@@ -386,11 +432,7 @@ int main(int argc, char * * argv){
 
         pd->setAmount(amount);
 
-        std::vector<std::vector<ln_units>> flows(net->getNumNodes(), vector<ln_units
-        		>(net->getNumNodes()));
-		long fee=0;
 
-		long transferredAmount=0;
 
 		if (pd->RunSolver(flows,fee)==0){
 					std::cout << "Success!\n";
@@ -404,6 +446,8 @@ int main(int argc, char * * argv){
 					stats.successes++;
 					stats.feesPaid+=fee;
 
+					success=true;
+
 					printSolution(cout, string("Solution given by ") + typeid(*pd).name(), flows, fee);
 
         } else {
@@ -412,7 +456,15 @@ int main(int argc, char * * argv){
         }
 
 
-            
+nextpay:
+
+		double acceptRatio = ((double)stats.successes) / stats.numPayments;
+
+		std::cerr << "Success ratio: " << acceptRatio << "\n";
+		logFileO << time << " " << amount << " "<< src << " " << dst << " " << stats.successes << " " << stats.fails
+				<< " " << acceptRatio << " " << net->averageImbalance() << " " << stats.averagePathLength << " " << stats.averageFee << " " << stats.feesPaid
+				<< " " << net->minFunds() << " " << net->maxFunds() <<   "\n";
+
 /*
 		case ResolutionMethod::HEURISTIC:
 		{
@@ -529,6 +581,8 @@ int main(int argc, char * * argv){
 	delete paymGen;
 
 	assert(stats.successes+stats.fails==stats.numPayments);
+
+	logFileO.close();
 
 	return 0;
 }
