@@ -223,7 +223,7 @@ void PaymentDeployerProportional::setUpperBound(int i, int j, int pathN, long l)
 int  PaymentDeployerProportional::parseOutputFile(string glpk_output, string outputFile, std::vector<Tpath> & paths, long & totalFee) {
 
 #ifdef DEBUG
-		std::cout << res;
+		std::cout << glpk_output;
 #endif
 
 		std::size_t found=glpk_output.find("SOLUTION FOUND");
@@ -297,8 +297,16 @@ int  PaymentDeployerProportional::parseOutputFile(string glpk_output, string out
 
 				getline(fpOut, line);
 
+
+				if (tokenize(line).size()<5){
+					string add;
+					getline(fpOut, add);
+					line = line + " " + add;
+				}
+
 				//std::cout << "LINE WITH SOLUTIONS " << line << "\n";
-				//std::cout << "LINE WITH SOLUTIONS " << tokenize(line)[4] << "\n";
+//				std::cout << "LINE WITH SOLUTIONS " << tokenize(line)[4] << "\n";
+
 				fVal=convertToDouble(tokenize(line)[4]);
 
 				//if (fabs(fVal)>EPSILON){

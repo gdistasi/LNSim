@@ -200,10 +200,10 @@ int  PaymentDeployerMultipathExact::RunSolver( std::vector< std::vector<long> > 
 int  PaymentDeployerMultipathExact::parseOutputFile(string glpk_output, string outputFile, std::vector< std::vector<long> > & flow, long & totalFee) {
 
 #ifdef DEBUG
-		std::cout << res;
+		std::cout << glpk_output;
 #endif
 
-		std::size_t found=glpk_output.find("SOLUTION FOUND");
+		std::size_t found=glpk_output.find("INTEGER OPTIMAL SOLUTION FOUND");
 		if (found==std::string::npos){
 				return PAYMENT_FAILED;
 		}
@@ -274,7 +274,7 @@ int  PaymentDeployerMultipathExact::parseOutputFile(string glpk_output, string o
 
 				//std::cout << "LINE WITH SOLUTIONS " << line << "\n";
 				//std::cout << "LINE WITH SOLUTIONS " << tokenize(line)[4] << "\n";
-				fVal=convertToDouble(tokenize(line)[4]);
+				fVal=convertToDouble(tokenize(line)[3]);
 
 				//if (fabs(fVal)>EPSILON){
 
