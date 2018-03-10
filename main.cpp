@@ -501,6 +501,7 @@ int main(int argc, char * * argv){
 					stats.fails+=1;
         }
 
+        delete pd;
 
 nextpay:
 
@@ -614,7 +615,6 @@ nextpay:
 			}
 		}
 */ 
-        delete pd;
 
 	} while (time<totalTime && stats.numPayments < maxPayments );
 
