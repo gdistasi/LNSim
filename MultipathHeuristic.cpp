@@ -9,6 +9,7 @@
 #include "glpk/PaymentDeployerProportional.h"
 #include "defs.h"
 #include "utils.h"
+#include <limits>
 
 MultipathHeuristic::~MultipathHeuristic() {
 	// TODO Auto-generated destructor stub
@@ -126,10 +127,10 @@ int  MultipathHeuristic::RunSolver( Tflows & flow, long & totalFee){
 
 				//Tflows flowOpt(numNodes, vector<long>(numNodes));
 
-				vector<Tpath> paths;
+				vector<Tpath> pathsOpt;
 				long feeOpt=0;
 
-				if (pdp.RunSolver(paths, feeOpt)==0){
+				if (pdp.RunSolver(pathsOpt, feeOpt)==0){
 
 					/*long baseFees=0;
 					for (auto pv: paths){
@@ -142,11 +143,13 @@ int  MultipathHeuristic::RunSolver( Tflows & flow, long & totalFee){
 						}
 					}*/
 
-					printSolution(cout, "Solution after optimization" , paths, feeOpt);
+					printSolution(cout, "Solution after optimization" , pathsOpt, feeOpt);
 
 
 					if (feeOpt < tFees){
 						std::cout << "Optimization step improved the solution. " << feeOpt << " vs " << tFees << " \n";
+						tFees = feeOpt;
+						paths = pathsOpt;
 						//paths = convertFlowsToPaths(flowOpt, source, destination);
 					} else {
 						std::cout << "Optimization step has not improved the solution. " << feeOpt << " vs " << tFees << " \n";
@@ -154,7 +157,8 @@ int  MultipathHeuristic::RunSolver( Tflows & flow, long & totalFee){
 
 				} else {
 					std::cerr<<"Optimization step failed.  \n";
-					exit(1);
+					//feeOpt = std::numeric_limits<long>::max();
+					//exit(1);
 				}
 
 		}

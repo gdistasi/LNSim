@@ -8,6 +8,7 @@
 #include "defs.h"
 #include "utils.h"
 #include <iostream>
+#include <sstream>
 
 double mytrunc(double a){
 	long p = (a / MINIMUM_UNIT);
@@ -28,6 +29,38 @@ double convertToDouble(string str){
 	double value;
 	buffer >> value;
 	return value;
+}
+
+string token(string str, int index, char sep){
+	int i=0;
+	int k=0;
+	std::stringstream ss;
+
+	// skip initial seps
+	while (i < str.size() && str[i]==sep)
+		i++;
+
+	while (i < str.size() && k < index){
+		if (str[i]==' '){
+
+			k++;
+
+			while (i < str.size() && str[i]==sep)
+				i++;
+
+			if (k==index) break;
+		}
+
+		i++;
+	}
+
+	while (i < str.size() && str[i]!=sep){
+		ss << str[i];
+		i++;
+	}
+
+
+	return ss.str();
 }
 
 vector<string> tokenize(string str)

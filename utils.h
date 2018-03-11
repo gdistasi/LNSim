@@ -7,6 +7,7 @@
 
 using namespace std;
 
+string token(string str, int index, char sep=' ');
 vector<string> tokenize(string str);
 long convertTo(string str);
 double convertToDouble(string str);

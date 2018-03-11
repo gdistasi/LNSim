@@ -289,7 +289,10 @@ int  PaymentDeployerProportional::parseOutputFile(string glpk_output, string out
 
 		double fVal;
 
-		map< tuple<int, int, int>, long> flowsT;
+		long flowsT[numPaths+1][numNodes][numNodes];
+		memset(&flowsT,0,sizeof(flowsT));
+
+		string line2;
 
 		for (int i=0; i<numNodes; i++)
 			for (int j=0; j<numNodes; j++)
@@ -298,24 +301,26 @@ int  PaymentDeployerProportional::parseOutputFile(string glpk_output, string out
 				getline(fpOut, line);
 
 
-				if (tokenize(line).size()<5){
-					string add;
-					getline(fpOut, add);
-					line = line + " " + add;
+				if (line.size()<50){
+								getline(fpOut, line2);
 				}
+
+				if (resFunds(i,j)==0 || this->getUpperBound(i,j,p)==0) continue;
+
+				line = line + " " + line2;
 
 				//std::cout << "LINE WITH SOLUTIONS " << line << "\n";
 //				std::cout << "LINE WITH SOLUTIONS " << tokenize(line)[4] << "\n";
 
-				fVal=convertToDouble(tokenize(line)[4]);
+				fVal=convertToDouble(token(line,3));
 
 				//if (fabs(fVal)>EPSILON){
 				if (fVal>0)
-					flowsT[tuple<int, int, int>(i,j,p)]=round(fVal);
+					flowsT[p][i][j]=round(fVal);
 
 #ifdef DEBUG
-					if (flowsT[tuple<int,int,int>(i,j,p)]>0)
-						fprintf(stdout, "flow[%d,%d,%d]=%lu\n",i,j, p, flowsT[std::tuple<int, int, int>(i,j,p)]);
+					if (flowsT[p][i][j]>0)
+						fprintf(stdout, "flow[%d,%d,%d]=%lu\n",i,j, p, flowsT[p][i][j]);
 #endif
 					//std::cout << "flow["<<i<<","<<j<<"]="<<flow[i][j]<<  "\n";
 
@@ -326,14 +331,15 @@ int  PaymentDeployerProportional::parseOutputFile(string glpk_output, string out
 
 		}
 
-		for (int k=1; k<=numPaths;  k++){
+		for (int p=1; p<=numPaths;  p++){
 			Tpath path;
 			int curr=source;
 
 			do {
 				for (int i=0; i<numNodes; i++){
-					if (flowsT[tuple<int,int,int>(curr,i,k)]!=0){
-						path.push_back( pair<pair<int,int>,long>( pair<int,int>(curr,i), flowsT[tuple<int,int,int>(curr,i,k)]));
+					if (flowsT[p][curr][i]!=0){
+						//std::cerr << "adding " << curr << " " << i << "\n";
+						path.push_back( pair<pair<int,int>,long>( pair<int,int>(curr,i), flowsT[p][curr][i]));
 						curr=i;
 						break;
 					}
