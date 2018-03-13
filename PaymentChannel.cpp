@@ -35,12 +35,19 @@ void PaymentChannel::PayA(ln_units P) {
 	this->residualFundsB-=P;
 	this->residualFundsA+=P;
     
-    if (this->residualFundsA<0 || this->residualFundsB < 0){
+    if (this->residualFundsA<0){
         std::cerr << " A " << this->residualFundsA << " B " << this->residualFundsB << " pay " << P << " \n";
+        residualFundsA=0;
     }
     
-	assert(this->residualFundsB>=0);
-	assert(this->residualFundsA>=0);
+    if (this->residualFundsB<0){
+        std::cerr << " A " << this->residualFundsA << " B " << this->residualFundsB << " pay " << P << " \n";
+        residualFundsB=0;
+    }
+    
+	assert(abs(this->residualFundsB)<1000);
+	assert(abs(this->residualFundsA)<1000);
+    
 
 	//std::cout << "New balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
 
