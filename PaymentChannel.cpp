@@ -45,8 +45,8 @@ void PaymentChannel::PayA(ln_units P) {
         residualFundsB=0;
     }
     
-	assert(abs(this->residualFundsB)<1000);
-	assert(abs(this->residualFundsA)<1000);
+	assert(this->residualFundsB>-2000);
+	assert(this->residualFundsA>-2000);
     
 
 	//std::cout << "New balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
