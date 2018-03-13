@@ -138,7 +138,7 @@ void LightningNetwork::checkResidualFunds() const {
 		if (ch->getResidualFundsA()<-MINIMUM_UNIT || ch->getResidualFundsB()<-MINIMUM_UNIT){
 			std::cerr << "Residual funds of channel between " << ch->getEndPointA()->getId() << " and " <<
 					ch->getEndPointB()->getId() << " is < 0: " << ch->getResidualFundsA() << " " << ch->getResidualFundsB() << "\n";
-			exit(1);
+			//exit(1);
 
 		}
 	}
