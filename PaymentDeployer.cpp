@@ -315,17 +315,28 @@ double PaymentDeployer::PiecewiseLinearFee::calcFee(long payment){
 
 	double rest = payment;
 
-	int i=1;
+
+	//ex.
+	// baseFee 900
+	// point 0:0 1:1000 2:2000 size:3
+	// slopes  0:10 1:30
+	// payment 1500
+	// fee = 900 + 1000 *10 + 500 * 30 =
+
+	assert(starting_points.size()>=2);
+
+	int i=starting_points.size()-2;
 
 	while (rest>0){
 
-		if ( rest >= (starting_points[i] - starting_points[i-1])){
-			fee +=  ( starting_points[i] - starting_points[i-1] ) * coefficients[i-1] / 1000;
-			rest -= starting_points[i] - starting_points[i-1];
-		} else {
-			fee += rest *  coefficients[i-1] / 1000;
-			break;
+		assert(i>=0);
+
+		if ( rest >= starting_points[i]){
+			fee +=  ( rest - starting_points[i] ) * coefficients[i] / 1000;
+			rest -= rest - starting_points[i];
 		}
+
+		i--;
 	}
 
 	return fee;
@@ -338,7 +349,6 @@ double PaymentDeployer::calcFee(int i, int j, double payment){
 
 	if (i==j){
 		std::cerr << "i equal to j " << i << " " << j << "\n";
-
 	}
 
 	//vector<PaymentChannel *> chs = channelsByNode[i];
@@ -353,7 +363,9 @@ double PaymentDeployer::calcFee(int i, int j, double payment){
 	if (i == source) return 0;
 
 	if (fees.find(pair<int,int>(i, j))!=fees.end()){
-		//std::cout << "fee " << fees[pair<int,int>(i, j)].calcFee(payment) << "\n";
+#ifdef DEBUG
+		std::cout << i << " " << j << " fee for payment  " << payment << " is " << fees[pair<int,int>(i, j)].calcFee(payment) << "\n";
+#endif
 		dis = fees[pair<int,int>(i, j)].calcFee(payment);
 	}
 

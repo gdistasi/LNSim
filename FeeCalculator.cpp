@@ -36,7 +36,7 @@ std::vector<long> FeeCalculatorOptimized::getPoints(ln_units resFundsA, ln_units
 	points.push_back(0);
 
 	if (resFundsA > resFundsB){
-		points.push_back(resFundsA-resFundsB);
+		points.push_back((resFundsA-resFundsB)/2);
 	}
 
 	points.push_back(resFundsA);
@@ -67,15 +67,15 @@ millisatoshis FeeCalculatorOptimized::calcFee(millisatoshis P, PaymentChannel * 
 	fundsA = !reverse ? pc->getResidualFundsA() : pc->getResidualFundsB();
 	fundsB = reverse ? pc->getResidualFundsA() : pc->getResidualFundsB();
 
-	ln_units imb = fundsA - fundsB;
+	ln_units imbh = (fundsA - fundsB)/2;
 
 	millisatoshis fee=0;
 
 	if (fundsA > fundsB) {
-		if ( P <= imb )
+		if ( P <= imbh )
 			fee = baseFee + slow * P;
 		else
-			fee = baseFee + slow * imb + (P-imb) * shigh;
+			fee = baseFee + slow * imbh + (P-imbh) * shigh;
 	} else
 		fee = baseFee + P * shigh;
 

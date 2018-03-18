@@ -1,0 +1,87 @@
+#! /usr/bin/octave -qf
+
+
+#graphics_toolkit ("gnuplot") 
+
+pkg load signal;
+
+graphicformat = "pdf";
+extension = "pdf";
+
+arg_list = argv ();
+
+if nargin > 0
+  inputf = arg_list{1};
+else
+  printf("%s\n","Input file name missing, exiting...");
+  return;
+endif
+
+if (f = fopen(inputf, "r")) < 0
+  printf("%s%s%s\n", "File ", inputf, " does not exist, exiting...");
+  return;
+endif
+
+if size(s = getenv("PLOT_TITLE"))
+  title(s);
+endif
+
+# read labels
+str = fgetl(f);
+labels =  strsplit (str);
+labels = labels(1:size(labels)(2)-1);
+columns = size(labels)(2);
+
+
+# read data 
+data = fscanf(f, "%f", [size(labels, 2), Inf])';
+
+temp = strsplit(strrep(inputf, "\\", "/"), "/");
+outputf = strsplit(deblank(temp{size(temp, 1), :}), ".");
+ylbl = outputf{1,:};
+
+
+markers = ["*" , "+" , "<" , ">" , "^" , "d" , "o" , "p" , "pentagram" , "s" , "square" , "v" , "x" ,  "diamond" , "h" , "hexagram" ];
+colors = [ "b", "c", "r", "g", "m", "y", "r" ];
+
+
+#samples=0
+#sum=0
+#newdata = 0    
+#for i = 1:size(data)(1)
+#    samples=samples+1
+#    sum = sum + data(i)
+#    if (samples==numSamples)        
+#        newdata(size(newdata)(2)i/numSaples) = 
+#    endif
+#endfor
+
+
+samples = 250;
+decfactor = round(size(data)(1)/samples);
+
+
+
+for i = 2:columns
+    plot(decimate(data(:,1),decfactor), decimate(data(:,i),decfactor), "marker", markers(i), "color", colors(i), "markersize", 4 );
+    hold on;
+endfor
+
+grid on;
+
+
+ylbl(1,1) = toupper(ylbl(1,1));
+ylabel(ylbl);
+xlabel(labels(1));
+
+if size(s = getenv("XLIM"))
+  xlim([0, str2double(s)]);
+endif
+
+legend(labels(:,2:columns), "location", "southoutside");
+legend("boxon");
+
+#print -dpdf prova.pdf
+eval(cstrcat("print -dpdf ", ylbl, ".", extension));
+
+printf("%s\n","Done!");

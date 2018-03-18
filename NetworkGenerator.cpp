@@ -50,6 +50,7 @@ LightningNetwork * NetworkGenerator::generateOptimizedFee(LightningNetwork * bas
 }
 
 
+/*
 LightningNetwork * NetworkGenerator::generate(int numNodes, double connProb,
 											  double minFund, double maxFund,
 											  double sendingFee, double receivingFee,
@@ -151,6 +152,7 @@ LightningNetwork * NetworkGenerator::generate(int numNodes, double connProb,
 
 			return net;
 }
+/*
 
 /**
 mark all nodes as unvisited

@@ -37,7 +37,7 @@ int  MultipathHeuristic::RunSolver( Tflows & flow, long & totalFee){
 		long tFees=0;
 
 		//let's find the k  paths.
-		//We start by finding a best path for a payment of value  P/k on a single path... FIX
+		//We start by finding a best path for a payment of value  P/k on a single path...
 		//and so on
 		bool success=true;
 		for (int i=1; i<=k; i++){
@@ -91,7 +91,8 @@ int  MultipathHeuristic::RunSolver( Tflows & flow, long & totalFee){
 							coeff.push_back(getFee(from,to).coefficients[i-1]);
 
 							vector<long> voidV;
-							pdp.AddPaymentChannel(from,to, functionPoints[i],0, getFee(from,to).baseFee , voidV,  coeff);
+							long baseFee = getFee(from,to).baseFee + calcFee(from,to,functionPoints[i-1]);
+							pdp.AddPaymentChannel(from,to, functionPoints[i],0, baseFee , voidV,  coeff);
 
 							if (functionPoints[i-1]>0){
 								pdp.setLowerBound(from,to,pathN,functionPoints[i-1]);

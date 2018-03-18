@@ -46,8 +46,19 @@ int  PaymentDeployerProportional::RunSolver(std::vector<Tpath> & paths, long & t
 	// num paths to be used
 	fprintf(fpDat, "param numPaths :=%d;\n", numPaths);
 
+
 	// residual funds constraints
-	fprintf(fpDat, "param r:\n");
+		fprintf(fpDat, "param r:=\n");
+		for (i = 0; i < nodeNum; i++) {
+			for (int j=0; j<nodeNum; j++){
+				if (resFunds(i,j)>0)
+					fprintf(fpDat, "[%d,%d] %lu ", i,j,resFunds(i,j));
+			}
+		}
+		fprintf(fpDat, ";\n\n");
+
+	// residual funds constraints
+	/*fprintf(fpDat, "param r:\n");
 	for (i = 0; i < nodeNum; i++) {
 		fprintf(fpDat, "%d ", i);
 	}
@@ -61,42 +72,29 @@ int  PaymentDeployerProportional::RunSolver(std::vector<Tpath> & paths, long & t
 		}
 		fprintf(fpDat, "\n");
 	}
-	fprintf(fpDat, ";\n\n");
+	fprintf(fpDat, ";\n\n");*/
 
-	// base fee param
-		fprintf(fpDat, "param baseSendingFee:\n");
-		for (i = 0; i < nodeNum; i++) {
-			fprintf(fpDat, "%d ", i);
-		}
-		fprintf(fpDat, ":=\n");
 
-		// write down the r matrix
+		fprintf(fpDat, "param baseSendingFee:=\n");
 		for (i = 0; i < nodeNum; i++) {
-			fprintf(fpDat, "%d ", i);
-			for (j = 0; j < nodeNum; j++) {
-				fprintf(fpDat, "%lu ", baseSendingfee(i,j));
+			for (int j=0; j<nodeNum; j++){
+				if (resFunds(i,j)>0)
+					fprintf(fpDat, "[%d,%d] %lu ", i,j,baseSendingfee(i,j));
 			}
-			fprintf(fpDat, "\n");
 		}
 		fprintf(fpDat, ";\n\n");
 
 
 	// base fees
-	fprintf(fpDat, "param feerate_perkw:\n");
-	for (i = 0; i < nodeNum; i++) {
-		fprintf(fpDat, "%d ", i);
-	}
-	fprintf(fpDat, ":=\n");
-
-			// write down the r matrix
-	for (i = 0; i < nodeNum; i++) {
-		fprintf(fpDat, "%d ", i);
-		for (j = 0; j < nodeNum; j++) {
-			fprintf(fpDat, "%lu ", feerate_perkw(i,j));
+		fprintf(fpDat, "param feerate_perkw:=\n");
+		for (i = 0; i < nodeNum; i++) {
+			for (int j=0; j<nodeNum; j++){
+				if (resFunds(i,j)>0)
+					fprintf(fpDat, "[%d,%d] %lu ", i,j,feerate_perkw(i,j));
+			}
 		}
-		fprintf(fpDat, "\n");
-	}
-	fprintf(fpDat, ";\n\n");
+		fprintf(fpDat, ";\n\n");
+
 
 	fprintf(fpDat, "param lowbound :=\n");
 	for (i = 0; i < nodeNum; i++) {
@@ -149,7 +147,7 @@ int  PaymentDeployerProportional::RunSolver(std::vector<Tpath> & paths, long & t
 
 	fclose(fpDat);
 
-	sprintf(commandString, "glpsol --model %s --data %s -o %s",
+	sprintf(commandString, "glpsol --model %s --data %s -w %s",
 					(modelsDirectory+string("/ModelProportional")).c_str(), dataFile, outputFile);
 	cout << commandString << endl;
 //	::system(commandString);
@@ -252,11 +250,11 @@ int  PaymentDeployerProportional::parseOutputFile(string glpk_output, string out
 	    getline (fpOut,line);
 	    getline (fpOut,line);
 
-		rows=convertTo(tokenize(line)[1]);
+		rows=convertTo(token(line,2));
 
 	    getline (fpOut,line);
 
-		columns=convertTo(tokenize(line)[1]);
+		columns=convertTo(token(line,2));
 
 	    //cout << "COLUMNS " << columns << "\n";
 		//cout << "RW " << rows << "\n";
@@ -268,24 +266,28 @@ int  PaymentDeployerProportional::parseOutputFile(string glpk_output, string out
 		//fscanf(fpOut, "%s", solStatus);
 
 		getline (fpOut,line);
-
+		getline (fpOut,line);
 		getline (fpOut,line);
 
-		getline (fpOut,line);
-
-		double paying = convertToDouble(tokenize(line)[3]);
+		double paying = convertToDouble(token(line,4));
 
 		totalFee = round(paying) - payment;
 
 		std::cout<<"Total fees " << totalFee << "\n";
 
 		//go to the solutions
-		found=line.find("Column name");
-		while (found==std::string::npos){
-			getline (fpOut,line);
-			found=line.find("Column name");
-		}
+		//found=line.find("Column name");
+		//while (found==std::string::npos){
+		//	getline (fpOut,line);
+		//	found=line.find("Column name");
+		//}
+
 		getline (fpOut,line);
+		getline (fpOut,line);
+
+		for (int i=0; i<rows; i++)
+			getline (fpOut,line);
+
 
 		double fVal;
 
@@ -301,13 +303,13 @@ int  PaymentDeployerProportional::parseOutputFile(string glpk_output, string out
 				getline(fpOut, line);
 
 
-				if (line.size()<50){
-								getline(fpOut, line2);
-				}
+				//if (line.size()<50){
+				//				getline(fpOut, line2);
+				//}
 
 				if (resFunds(i,j)==0 || this->getUpperBound(i,j,p)==0) continue;
 
-				line = line + " " + line2;
+				//line = line + " " + line2;
 
 				//std::cout << "LINE WITH SOLUTIONS " << line << "\n";
 //				std::cout << "LINE WITH SOLUTIONS " << tokenize(line)[4] << "\n";

@@ -3,6 +3,9 @@
 set N;
 /* nodes*/
 
+set L;
+/* links */
+
 param r{a in N, b in N}, default 0;
 /* residual fund of p.c. (u,v) */ 
 
@@ -11,16 +14,16 @@ param P;
 
 param numPaths >= 0;
 
-param lowbound{x in N, y in N, i in 1..numPaths} >=0;
+param lowbound{x in N, y in N, i in 1..numPaths} >=0, default 0;
 param upbound{x in N, y in N, i in 1..numPaths} >=0;
 
 
-param baseSendingFee{x in N, y in N} >=0;
+param baseSendingFee{x in N, y in N} >=0, default 0;
 
 var flow{a in N, b in N, i in 1..numPaths} >= 0;
 /* variable expressing the amount paid by x to y */
 
-param feerate_perkw{a in N, b in N} integer >= 0;
+param feerate_perkw{a in N, b in N} integer >= 0, default 0;
 /* num segments */
 
 param source in N;
@@ -41,13 +44,13 @@ s.t. upboundsst{x in N, y in N, i in 1..numPaths: r[x,y]>0}: upbound[x,y,i] >= f
 
 
 s.t. floconInter{a in N, i in 1..numPaths: a <> source and a <> destination}: sum{x in N} flow[x,a,i] =   
-sum{x in N}  flow[a,x,i]  + sum{x in N} ((  flow[a,x,i] * feerate_perkw[a,x]  ) / 1000 + linkused[a,x,i]*baseSendingFee[a,x]);   
+sum{x in N}  flow[a,x,i]  + sum{x in N} ((  (flow[a,x,i]-lowbound[a,x,i]) * feerate_perkw[a,x]  ) / 1000 + linkused[a,x,i]*baseSendingFee[a,x]);   
 /* flow conservation constraint */
 
 
 s.t. endToEnd{i in 1..numPaths}: sum{x in N: x <> source} flow[source,x,i]  - sum{x in N: x <> source} flow[x, source,i] = 
-sum{x in N} flow[x,destination,i] - sum{x in N} flow[destination,x,i]  + 	sum{x in N, y in N: x <> source}(  (flow[x,y,i] * feerate_perkw[x,y] ) / 1000 + linkused[x,y,i]*baseSendingFee[x,y])  ;   
-
+sum{x in N} flow[x,destination,i] - sum{x in N} flow[destination,x,i]  + 	sum{x in N, y in N: x <> source}(  ( (flow[x,y,i]-lowbound[x,y,i]) * feerate_perkw[x,y] ) / 1000 + linkused[x,y,i]*baseSendingFee[x,y] )  ;   
+ 
 
 s.t. endToEnd2: sum{x in N,i in 1..numPaths:  x <> destination} flow[x, destination, i] -  sum{x in N,i in 1..numPaths} flow[destination, x,i] = P; 
 /* end-to-end flow constraints */
