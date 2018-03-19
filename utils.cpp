@@ -5,17 +5,15 @@
  *      Author: giovanni
  */
 
-#include "defs.h"
+
 #include "utils.h"
 #include <iostream>
 #include <sstream>
+#include <vector>
 
-double mytrunc(double a){
-	long p = (a / MINIMUM_UNIT);
-	//std::cout << p << "p\n";
 
-	return double(p)*MINIMUM_UNIT;
-}
+using namespace std;
+
 
 long convertTo(string str){
 	istringstream buffer(str);
@@ -62,6 +60,8 @@ string token(string str, int index, char sep){
 
 	return ss.str();
 }
+
+//#ifndef TESTUNIT0
 
 vector<string> tokenize(string str)
 {
@@ -118,4 +118,26 @@ void printSolution(ostream & of, string title, vector<Tpath> paths, long fee){
 	}
 
 }
+
+double mytrunc(double a){
+	long p = (a / MINIMUM_UNIT);
+	//std::cout << p << "p\n";
+
+	return double(p)*MINIMUM_UNIT;
+}
+
+
+//#endif
+
+
+#ifdef TESTUNIT0
+int main(){
+
+	string a = "j 33457 362736664.891348";
+
+	std::cout << convertToDouble(token(a,0)) << endl;
+	std::cout << convertToDouble(token(a,1))<< endl;
+	std::cout << convertToDouble(token(a,2))<< endl;
+}
+#endif
 

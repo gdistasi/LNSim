@@ -23,7 +23,6 @@ public:
 
 protected:
 	int  parseOutputFile(string glpk_output, string outputFile, std::vector<Tpath> & paths, long & totalFee);
-	long baseSendingfee(int i, int j);
 	long feerate_perkw(int i, int j);
 
 	/* lower bound for flows on channels -- upper bounds are given by channel capacities */

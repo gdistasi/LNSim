@@ -79,7 +79,7 @@ int  PaymentDeployerProportional::RunSolver(std::vector<Tpath> & paths, long & t
 		for (i = 0; i < nodeNum; i++) {
 			for (int j=0; j<nodeNum; j++){
 				if (resFunds(i,j)>0)
-					fprintf(fpDat, "[%d,%d] %lu ", i,j,baseSendingfee(i,j));
+					fprintf(fpDat, "[%d,%d] %lu ", i,j,getBaseFee(i,j));
 			}
 		}
 		fprintf(fpDat, ";\n\n");
@@ -186,15 +186,7 @@ long PaymentDeployerProportional::feerate_perkw(int i, int j) {
 	return fees[pair<int,int>(i,j)].coefficients[0];
 }
 
-long PaymentDeployerProportional::baseSendingfee(int i, int j){
 
-	if (channels.find(pair<int,int>(i,j))==channels.end()){
-		return 0;
-	}
-
-	return fees[pair<int,int>(i,j)].baseFee;
-
-}
 
 
 void PaymentDeployerProportional::setLowerBound(int i, int j, int pathN, long l) {

@@ -64,54 +64,37 @@ int  PaymentDeployerMultipathExact::RunSolver( std::vector< std::vector<long> > 
 		fprintf(fpDat, ";\n\n");
 
 		// residual funds constraints
-		fprintf(fpDat, "param r:\n");
-		for (i = 0; i < nodeNum; i++) {
-			fprintf(fpDat, "%d ", i);
-		}
-		fprintf(fpDat, ":=\n");
-
-		// write down the r matrix
-		for (i = 0; i < nodeNum; i++) {
-			fprintf(fpDat, "%d ", i);
-			for (j = 0; j < nodeNum; j++) {
-				fprintf(fpDat, "%lu ", resFunds(i,j));
+			fprintf(fpDat, "param r:=\n");
+			for (i = 0; i < nodeNum; i++) {
+				for (int j=0; j<nodeNum; j++){
+					if (resFunds(i,j)>0)
+						fprintf(fpDat, "[%d,%d] %lu ", i,j,resFunds(i,j));
+				}
 			}
-			fprintf(fpDat, "\n");
-		}
-		fprintf(fpDat, ";\n\n");
+			fprintf(fpDat, ";\n\n");
+
 
 		// base fees
-		fprintf(fpDat, "param baseSendingFee:\n");
+		fprintf(fpDat, "param baseSendingFee:=\n");
 		for (i = 0; i < nodeNum; i++) {
-			fprintf(fpDat, "%d ", i);
-		}
-		fprintf(fpDat, ":=\n");
-
-				// write down the r matrix
-		for (i = 0; i < nodeNum; i++) {
-			fprintf(fpDat, "%d ", i);
-			for (j = 0; j < nodeNum; j++) {
-				fprintf(fpDat, "%lu ", getBaseFee(i,j));
-			}
-			fprintf(fpDat, "\n");
+				for (int j=0; j<nodeNum; j++){
+					if (resFunds(i,j)>0)
+						fprintf(fpDat, "[%d,%d] %lu ", i,j,getBaseFee(i,j));
+				}
 		}
 		fprintf(fpDat, ";\n\n");
 
-		fprintf(fpDat, "param sendingFeeNumRegions:\n");
-		for (i = 0; i < nodeNum; i++) {
-			fprintf(fpDat, "%d ", i);
-		}
-		fprintf(fpDat, ":=\n");
 
-		// write down the r matrix
+		fprintf(fpDat, "param sendingFeeNumRegions:=\n");
 		for (i = 0; i < nodeNum; i++) {
-			fprintf(fpDat, "%d ", i);
-			for (j = 0; j < nodeNum; j++) {
-				fprintf(fpDat, "%d ", getCoefficients(i,j).size() );
+			for (int j=0; j<nodeNum; j++){
+				if (resFunds(i,j)>0)
+					fprintf(fpDat, "[%d,%d] %lu ", i,j,getCoefficients(i,j).size());
 			}
-			fprintf(fpDat, "\n");
 		}
 		fprintf(fpDat, ";\n\n");
+
+
 
 		// residual funds constraints - not really used for solving, just for debugging
 		/*fprintf(fpDat, "param sendingFeeRates :=\n");
@@ -183,7 +166,7 @@ int  PaymentDeployerMultipathExact::RunSolver( std::vector< std::vector<long> > 
 
 		fclose(fpDat);
 
-		sprintf(commandString, "glpsol --model %s --data %s -o %s",
+		sprintf(commandString, "glpsol --model %s --data %s -w %s",
 						(modelsDirectory+string("/ModelExact")).c_str(), dataFile, outputFile);
 		cout << commandString << endl;
 	//	::system(commandString);
@@ -197,7 +180,7 @@ int  PaymentDeployerMultipathExact::RunSolver( std::vector< std::vector<long> > 
 		return parseOutputFile(res, outputFile, flow, totalFee);
 }
 
-int  PaymentDeployerMultipathExact::parseOutputFile(string glpk_output, string outputFile, std::vector< std::vector<long> > & flow, long & totalFee) {
+int  PaymentDeployerMultipathExact::parseOutputFile(string glpk_output, string outputFile, std::vector< std::vector<long> > & flows, long & totalFee) {
 
 #ifdef DEBUG
 		std::cout << glpk_output;
@@ -215,89 +198,101 @@ int  PaymentDeployerMultipathExact::parseOutputFile(string glpk_output, string o
 
 		ifstream fpOut (outputFile);
 
-		if (fpOut.is_open() == false) {
-			cout << "failed to open file: " << outputFile << endl;
-			return COULD_NOT_OPEN_OUTPUT_FILE;
-		}
+			if (fpOut.is_open() == false) {
+				cout << "failed to open file: " << outputFile << endl;
+				return COULD_NOT_OPEN_OUTPUT_FILE;
+			}
 
-		string line;
+			string line;
 
-		int rows;
-		int columns;
+			int rows;
+			int columns;
 
 
-	    getline (fpOut,line);
-	    getline (fpOut,line);
+		    getline (fpOut,line);
+		    getline (fpOut,line);
 
-		rows=convertTo(tokenize(line)[1]);
+			rows=convertTo(token(line,2));
 
-	    getline (fpOut,line);
+		    getline (fpOut,line);
 
-		columns=convertTo(tokenize(line)[1]);
+			columns=convertTo(token(line,2));
 
-	    //cout << "COLUMNS " << columns << "\n";
-		//cout << "RW " << rows << "\n";
+		    cout << "COLUMNS " << columns << "\n";
+			cout << "RW " << rows << "\n";
 
-		//assert(columns==numNodes*numNodes);
+			//assert(columns==numNodes*numNodes);
 
-		//fscanf(fpOut, "%s", solStatus);
-		//fscanf(fpOut, "%s", solStatus);
-		//fscanf(fpOut, "%s", solStatus);
+			//fscanf(fpOut, "%s", solStatus);
+			//fscanf(fpOut, "%s", solStatus);
+			//fscanf(fpOut, "%s", solStatus);
 
-		getline (fpOut,line);
-
-		getline (fpOut,line);
-
-		getline (fpOut,line);
-
-		double paying = convertToDouble(tokenize(line)[3]);
-
-		totalFee = round(paying) - payment;
-
-		std::cout<<"Total fees " << totalFee << "\n";
-
-		//go to the solutions
-		found=line.find("Column name");
-		while (found==std::string::npos){
 			getline (fpOut,line);
-			found=line.find("Column name");
-		}
-		getline (fpOut,line);
+			getline (fpOut,line);
+			getline (fpOut,line);
+
+			double paying = convertToDouble(token(line,4));
+
+			totalFee = round(paying) - payment;
+
+			std::cout<<"Total fees " << totalFee << "\n";
+
+			//go to the solutions
+			//found=line.find("Column name");
+			//while (found==std::string::npos){
+			//	getline (fpOut,line);
+			//	found=line.find("Column name");
+			//}
+
+			getline (fpOut,line);
+			getline (fpOut,line);
+
+			for (int i=0; i<rows; i++)
+				getline (fpOut,line);
 
 
-		double fVal;
+			double fVal;
 
-		for (int i=0; i<numNodes; i++)
-			for (int j=0; j<numNodes; j++){
+			string line2;
 
-				getline(fpOut, line);
+			for (int i=0; i<numNodes; i++)
+				for (int j=0; j<numNodes; j++){
 
-				//std::cout << "LINE WITH SOLUTIONS " << line << "\n";
-				//std::cout << "LINE WITH SOLUTIONS " << tokenize(line)[4] << "\n";
-				fVal=convertToDouble(tokenize(line)[3]);
+					getline(fpOut, line);
 
-				//if (fabs(fVal)>EPSILON){
+					if (resFunds(i,j)==0) continue;
 
-					flow[i][j]=round(fVal);
-#ifdef DEBUG
-					if (flow[i][j]>0)
-						fprintf(stdout, "flow[%d,%d]=%lu\n",i,j, flow[i][j]);
-#endif
-					//std::cout << "flow["<<i<<","<<j<<"]="<<flow[i][j]<<  "\n";
+					//line = line + " " + line2;
 
-				//} else {
-				////	flow[i][j]=0;
-				//}
-				//fscanf(fpOut, "%s", solStatus);
+					//std::cout << "LINE WITH SOLUTIONS-" << line << "-\n";
+					//std::cout << "LINE WITH SOLUTIONS-" << token(line,2) << "\n";
 
-		}
+					fVal=convertToDouble(token(line,2));
 
-		fpOut.close();
-#ifdef DEBUG
-		cout << "Finished parsing.\n";
-#endif
+					//if (fabs(fVal)>EPSILON){
+					if (fVal>0){
+						flows[i][j]=round(fVal);
 
-		return 0;
+	//#ifdef DEBUG
+					//fprintf(stdout, "flow[%d,%d]=%lu\n",i,j, flows[i][j]);
+//	#endif
+						//std::cout << "flow["<<i<<","<<j<<"]="<<flow[i][j]<<  "\n";
+					}
+					//} else {
+					////	flow[i][j]=0;
+					//}
+					//fscanf(fpOut, "%s", solStatus);
+
+			}
+
+
+
+			fpOut.close();
+	#ifdef DEBUG
+			cout << "Finished parsing.\n";
+	#endif
+
+			return 0;
 
 
 

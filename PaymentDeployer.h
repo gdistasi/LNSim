@@ -52,6 +52,9 @@ public:
 
 	long getBaseFee(int x, int y);
 
+	long baseSendingFee(int i, int j) { return getBaseFee(i,j); }
+
+
     void setAmount(long am){ payment=am; }
     
     virtual int  RunSolver(Tflows & flow, long & totalFee) = 0;

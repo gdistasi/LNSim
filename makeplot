@@ -41,7 +41,7 @@ outputf = strsplit(deblank(temp{size(temp, 1), :}), ".");
 ylbl = outputf{1,:};
 
 
-markers = ["*" , "+" , "<" , ">" , "^" , "d" , "o" , "p" , "pentagram" , "s" , "square" , "v" , "x" ,  "diamond" , "h" , "hexagram" ];
+markers = ["*" , "+" , "<" , ">" , "^" , "x" , "o" , "p" , "pentagram" , "s" , "square" , "v" ,   "diamond" , "h" , "hexagram" ];
 colors = [ "b", "c", "r", "g", "m", "y", "r" ];
 
 
@@ -57,7 +57,7 @@ colors = [ "b", "c", "r", "g", "m", "y", "r" ];
 #endfor
 
 
-samples = 250;
+samples = 200;
 decfactor = round(size(data)(1)/samples);
 
 

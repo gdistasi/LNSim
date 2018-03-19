@@ -16,16 +16,16 @@ var xi{a in N, b in N} binary;
 
 s.t. binary{a in N, b in N}:  flow[a,b] <= xi[a,b] * r[a,b] ;
 
-param baseSendingFee{a in N, b in N} >= 0;
+param baseSendingFee{a in N, b in N} >= 0, default 0;
 
 /* num segments */
-param sendingFeeNumRegions{a in N, b in N} integer >= 0;
+param sendingFeeNumRegions{a in N, b in N} integer >= 0, default 0;
 
 /* sendingFeeLimits */
-param sendingFeeLimits { a in N, b in N, p in 0..sendingFeeNumRegions[a,b]: r[a,b]>0  } >= if p = 0 then 0 else sendingFeeLimits[a,b,p-1];
+param sendingFeeLimits { a in N, b in N, p in 0..sendingFeeNumRegions[a,b]: r[a,b]>0  } >= if p = 0 then 0 else sendingFeeLimits[a,b,p-1], default 0;
 
 /* sendingFeeRates */
-param sendingFeeRates{ a in N, b in N, p in 1..sendingFeeNumRegions[a,b]: r[a,b]>0 } >= if p = 1 then 0 else sendingFeeRates[a,b,p-1];
+param sendingFeeRates{ a in N, b in N, p in 1..sendingFeeNumRegions[a,b]: r[a,b]>0 } >= if p = 1 then 0 else sendingFeeRates[a,b,p-1], default 0;
 
 /* 
 http://homepages.rpi.edu/~mitchj/handouts/piecewise/ 
