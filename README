@@ -1,0 +1,91 @@
+LNSIM (Lightning Network SIMulator)
+============================================================================================
+
+In the following you can find the documentation to run the LN (Lightning Network) simulator.
+
+
+If you use this software please consider citing the following reference:
+
+G. Di Stasi, S. Avallone, R. Canonico, G. Ventre. Routing payments on the lightning network. In proceedings of the 2018 International Conference on Blockchain.
+
+
+
+Usage: LNSim --numNodes X --numSources X --numDestinations X --connectionProbability X ...  
+
+
+Topology specification:
+    
+    This set of parameters specify how the LN is generated
+    
+    --numNodes X 
+    Specifies the numbers of nodes in the network.
+    
+    
+    --numSources X
+    --numDestinations X 
+    
+    Specify the number of sources and destinations for the generated payments, picked randomly among the LN nodes (a node can be selected as both sender and destination)
+    
+    --connectionProbability X
+
+    Specifies with wich probability a payment channel is created between each couple of LN nodes
+    
+    Alternatively the topology can be provided on a file. Such file has to have the format as specified in the following: the first line contains the number of nodes. The subsequent lines contain each a payment channel specification, in the following format:
+    
+    node_id_source node_id_destination capacity_source capacity_destination
+    
+    
+    
+To specify channel funds:
+
+    --minFunds funds_in_satoshis --maxFunds funds_in_satoshis
+    
+    Channels endpoints' funds will be initially loaded with an amount randomly chosen between minFunds and maxFunds-
+    
+    
+    
+Payment generation:
+    
+    --intervalPayments s --totalTime s --maxPayments N --meanSizePayments 300000000. --variancePayments 120000000
+    
+    This set of parameters specify how the payments are created to test the network. 
+    
+    
+Fee specification:
+
+    This part specifies how the forwarding nodes apply the fee for forwarding the payment (at the moment is not possible to choose different fee policies for different nodes).
+
+    --baseFee millisatoshi --feerateLow millisatoshis_per_satoshi --feerateHigh millisatoshi_per_satoshi 
+    
+    baseFee is the fee appliead for the payment that does not depend on the payment amount
+    feerateLow is the fee (expressed as millisatoshis per satoshi sent) for the part of the payment that helps balancing the channel
+    feerateHigh is the fee (expressed as millisatoshis per satoshi sent) for the part of the payment that increase the imbalance of the channel
+    
+    If feerateLow==feewateHigh the applied fee is simply proportional.
+    
+Routing algorithm:
+    --paymentMethod [sp|mp] 
+    
+    sp stands for singlepath (one path, the one that minimizes the fees, according to the exact algorithm);
+    mp stands for multipath (multiple path, the ones the minimize the fees, according to the algorithm to be chosen with the following parameter)
+    
+Resolution Method:
+    --resolutionMethod [exact|heuristic]
+    
+    Exact specifies the selection of the exact resolution method. An exact method exists for the singlepath case and the multipath (the multipath case is slow because of the complexity of the algorithm).
+    Heustic specifies, in conjunction with the mp payment method, an heuristic based approach to find the best paths for the single payment.
+    
+    
+Log file:
+    --logFile filename
+    
+Seed:
+
+    --seed X
+    
+    Seed specification which is used by the random number generators of the simulator.
+
+
+Example:
+
+./LNSim --numNodes 200 --numSources 200 --numDestinations 200 --connectionProbability 0.031 --minFunds 1000000000 --maxFunds 5000000000 --intervalPayments 0.1 --totalTime 100000 --maxPayments 1000000  --baseFee 1000 --feerateLow 30 --feerateHigh 30  --paymentMethod sp --resolutionMethod exact   --seed 0 --logFile log.txt
