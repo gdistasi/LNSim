@@ -9,7 +9,7 @@ If you use this software please consider citing [1].
 Usage: LNSim --numNodes X --numSources X --numDestinations X --connectionProbability X ...  
 
 
-Topology specification; a set of parameters specify how the LN is generated
+Topology specification; a set of parameters to specify how the LN is generated
     
     --numNodes X 
     Specifies the numbers of nodes in the network.
