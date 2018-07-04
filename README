@@ -2,24 +2,17 @@ LNSIM (Lightning Network SIMulator)
 ============================================================================================
 
 In the following you can find the documentation to run the LN (Lightning Network) simulator.
-
-
-If you use this software please consider citing the following reference:
-
-G. Di Stasi, S. Avallone, R. Canonico, G. Ventre. Routing payments on the lightning network. In proceedings of the 2018 International Conference on Blockchain.
+If you use this software please consider citing [1].
 
 
 
 Usage: LNSim --numNodes X --numSources X --numDestinations X --connectionProbability X ...  
 
 
-Topology specification:
-    
-    This set of parameters specify how the LN is generated
+Topology specification; a set of parameters specify how the LN is generated
     
     --numNodes X 
     Specifies the numbers of nodes in the network.
-    
     
     --numSources X
     --numDestinations X 
@@ -36,7 +29,7 @@ Topology specification:
     
     
     
-To specify channel funds:
+Initial channel funds specification:
 
     --minFunds funds_in_satoshis --maxFunds funds_in_satoshis
     
@@ -69,23 +62,44 @@ Routing algorithm:
     sp stands for singlepath (one path, the one that minimizes the fees, according to the exact algorithm);
     mp stands for multipath (multiple path, the ones the minimize the fees, according to the algorithm to be chosen with the following parameter)
     
-Resolution Method:
+Resolution Method (for the finding of paths):
     --resolutionMethod [exact|heuristic]
     
     Exact specifies the selection of the exact resolution method. An exact method exists for the singlepath case and the multipath (the multipath case is slow because of the complexity of the algorithm).
     Heustic specifies, in conjunction with the mp payment method, an heuristic based approach to find the best paths for the single payment.
     
-    
-Log file:
-    --logFile filename
-    
 Seed:
-
     --seed X
     
     Seed specification which is used by the random number generators of the simulator.
 
 
+        
+Log file:
+    --logFile filename
+    
+    The log file contains a series of lines where each line contains a series of measures that are made on the LN:
+    "time amount src dst successes fails acceptRatio averageImbalance averagePathLength averageFee feesPaid minFunds maxFunds"
+    
+    Time: the time the measure was taken
+    Amount: the payment just processed
+    src: the source of the payment just processed
+    dst: the destination " "
+    successes: the total number of successful payments since beginning
+    fails: the total number of failed payments since beginning
+    acceptRatio: the ratio of the payments that have been successful since beginning
+    averageImbalance: a measure of the imbalance of the network at that moment (refer to  [1] for an explanation)
+    averagePathLength: the average path length of all successful payments since beginning
+    averageFee: the average fee of successful payments in millisatoshis since beginning
+    feesPais: the total amount of fees feesPaid
+    minFunds: the lowest value for an endpoint balance at Time
+    maxFunds: the highest value for an endpoint balance at Time
+    
 Example:
 
 ./LNSim --numNodes 200 --numSources 200 --numDestinations 200 --connectionProbability 0.031 --minFunds 1000000000 --maxFunds 5000000000 --intervalPayments 0.1 --totalTime 100000 --maxPayments 1000000  --baseFee 1000 --feerateLow 30 --feerateHigh 30  --paymentMethod sp --resolutionMethod exact   --seed 0 --logFile log.txt
+
+
+
+
+[1] G. Di Stasi, S. Avallone, R. Canonico, G. Ventre. Routing payments on the lightning network. In proceedings of the 2018 International Conference on Blockchain (Blockchain-2018)
