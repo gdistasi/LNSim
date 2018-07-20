@@ -1,13 +1,14 @@
 LNSIM (Lightning Network SIMulator)
 ============================================================================================
 
-In the following you can find the documentation to run the LN (Lightning Network) simulator.
+In the following you can find the documentation to run simulations on the LN (Lightning Network) simulator.
 If you use this software please consider citing [1].
 
 
 
 Usage: LNSim --numNodes X --numSources X --numDestinations X --connectionProbability X ...  
 
+In the following the description of the different configuration parameters.
 
 Topology specification; a set of parameters to specify how the LN is generated
     
@@ -28,13 +29,11 @@ Topology specification; a set of parameters to specify how the LN is generated
     node_id_source node_id_destination capacity_source capacity_destination
     
     
-    
 Initial channel funds specification:
 
     --minFunds funds_in_satoshis --maxFunds funds_in_satoshis
     
     Channels endpoints' funds will be initially loaded with an amount randomly chosen between minFunds and maxFunds-
-    
     
     
 Payment generation:
@@ -56,11 +55,13 @@ Fee specification:
     
     If feerateLow==feewateHigh the applied fee is simply proportional.
     
+    
 Routing algorithm:
     --paymentMethod [sp|mp] 
     
     sp stands for singlepath (one path, the one that minimizes the fees, according to the exact algorithm);
     mp stands for multipath (multiple path, the ones the minimize the fees, according to the algorithm to be chosen with the following parameter)
+    
     
 Resolution Method (for the finding of paths):
     --resolutionMethod [exact|heuristic]
@@ -68,11 +69,11 @@ Resolution Method (for the finding of paths):
     Exact specifies the selection of the exact resolution method. An exact method exists for the singlepath case and the multipath (the multipath case is slow because of the complexity of the algorithm).
     Heustic specifies, in conjunction with the mp payment method, an heuristic based approach to find the best paths for the single payment.
     
+    
 Seed:
     --seed X
     
     Seed specification which is used by the random number generators of the simulator.
-
 
         
 Log file:
@@ -81,7 +82,7 @@ Log file:
     The log file contains a series of lines where each line contains a series of measures that are made on the LN:
     "time amount src dst successes fails acceptRatio averageImbalance averagePathLength averageFee feesPaid minFunds maxFunds"
     
-    Time: the time the measure was taken
+    time: the time the measure was taken
     Amount: the payment just processed
     src: the source of the payment just processed
     dst: the destination " "
@@ -92,13 +93,13 @@ Log file:
     averagePathLength: the average path length of all successful payments since beginning
     averageFee: the average fee of successful payments in millisatoshis since beginning
     feesPais: the total amount of fees feesPaid
-    minFunds: the lowest value for an endpoint balance at Time
-    maxFunds: the highest value for an endpoint balance at Time
+    minFunds: the lowest value for an endpoint balance at time
+    maxFunds: the highest value for an endpoint balance at time
+    
     
 Example:
 
 ./LNSim --numNodes 200 --numSources 200 --numDestinations 200 --connectionProbability 0.031 --minFunds 1000000000 --maxFunds 5000000000 --intervalPayments 0.1 --totalTime 100000 --maxPayments 1000000  --baseFee 1000 --feerateLow 30 --feerateHigh 30  --paymentMethod sp --resolutionMethod exact   --seed 0 --logFile log.txt
-
 
 
 
