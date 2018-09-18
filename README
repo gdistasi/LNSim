@@ -78,7 +78,8 @@ Seed:
 Log file:
     --logFile filename
     
-    The log file contains a series of lines where each line contains a series of measures that are made on the LN:
+    The log file contains a series of lines where each line contains a series of measures that are made on the LN over time. Each line fields are the following:
+    
     "time amount src dst successes fails acceptRatio averageImbalance averagePathLength averageFee feesPaid minFunds maxFunds"
     
     Time: the time the measure was taken
@@ -98,7 +99,6 @@ Log file:
 Example:
 
 ./LNSim --numNodes 200 --numSources 200 --numDestinations 200 --connectionProbability 0.031 --minFunds 1000000000 --maxFunds 5000000000 --intervalPayments 0.1 --totalTime 100000 --maxPayments 1000000  --baseFee 1000 --feerateLow 30 --feerateHigh 30  --paymentMethod sp --resolutionMethod exact   --seed 0 --logFile log.txt
-
 
 
 
