@@ -17,6 +17,8 @@
 #include "SinglePathSolver.h"
 #include "MultipathHeuristic.h"
 
+#include <random>
+
 #include <getopt.h>
 #include "glpk/PaymentDeployerMultipathExact.h"
 #include "utils.h"
@@ -79,6 +81,9 @@ int main(int argc, char * * argv){
 	int numSources=1;
 	int numDestinations=1;
 	double connectionProbability=0.1;
+    
+    // Interval between fees' recalculation.
+    double tbfu=0;
 
 	ln_units minFund=0.01 * MILLISATOSHIS_IN_BTC;
 	ln_units maxFund=0.167 * MILLISATOSHIS_IN_BTC;
@@ -154,6 +159,7 @@ int main(int argc, char * * argv){
 			  {"logFile", required_argument, 0, 'L'},
 			  {"makePaymentsFile", required_argument, 0, 'a'},
 			  {"makeNetworkFile", required_argument, 0, 'A'},
+  			  {"tbfu", required_argument, 0, 'F'},
 			  {"seed",   required_argument, 0, 'S'},
 
 	          {0, 0, 0, 0}
@@ -161,7 +167,7 @@ int main(int argc, char * * argv){
 	      /* getopt_long stores the option index here. */
 	      int option_index = 0;
 
-	      int c = getopt_long (argc, argv, "s:v:i:t:n:p:m:M:r:f:P:",
+	      int c = getopt_long (argc, argv, "s:v:i:t:n:p:m:M:r:f:P:F:",
 	                       long_options, &option_index);
 
 	      /* Detect the end of the options. */
@@ -254,6 +260,10 @@ int main(int argc, char * * argv){
 
 	        case 'M':
 	        	maxFund=atof(optarg);
+	        	break;
+                
+            case 'F':
+	        	tbfu=atof(optarg);
 	        	break;
 
 	        case 'd':
@@ -379,7 +389,7 @@ int main(int argc, char * * argv){
 	double time;
 	ln_units amount;
 	int src,dst;
-
+    
 	long initFunds = net->totalFunds();
 
 	Stats stats;
@@ -412,6 +422,28 @@ int main(int argc, char * * argv){
 				 << "acceptRatio averageImbalance averagePathLength averageFee feesPaid minFunds maxFunds\n";
 
 
+                 
+    bool firstPayment=true;
+    
+    
+    
+    if (tbfu>0){
+        
+       std::default_random_engine generator;
+       std::normal_distribution<double> distribution(tbfu,tbfu/4);
+       
+       double t;
+       for ( PaymentChannel * ch: net->getChannels()){
+            
+            t=distribution(generator);
+            
+            if (t>0)
+                ch->setTbfu(t);
+       }
+
+    }
+    
+                 
 	do {
 
 		net->checkResidualFunds();
@@ -420,12 +452,20 @@ int main(int argc, char * * argv){
 		long transferredAmount=0;
 		bool success=false;
 		ln_units totalFee=0;
-
+        
 		std::vector<std::vector<ln_units>> flows(net->getNumNodes(), vector<ln_units
         		>(net->getNumNodes()));
 
 		std::cerr << "Getting next payment info...";
 		paymGen->getNext(amount,time,src,dst);
+
+        
+        for ( PaymentChannel * ch: net->getChannels()){
+                if (time - ch->getLastTimeFeeUpdate() > ch->getTbfu()){
+                        ch->updateFees(time);
+                }
+        }
+        
 
 		std::cerr << "Processing next payment - amount: " << ((double)amount)/MILLISATOSHIS_IN_BTC << "btc time: " << time << "s Src: " << src << " Dst: " << dst << "\n";
 
@@ -481,6 +521,7 @@ int main(int argc, char * * argv){
 
 
 		if (pd->RunSolver(flows,fee)==0){
+            
 					std::cout << "Success!\n";
 					totalFee+=fee;
 					net->makePayments(flows);
@@ -497,8 +538,10 @@ int main(int argc, char * * argv){
 					printSolution(cout, string("Solution given by ") + typeid(*pd).name(), flows, fee);
 
         } else {
+            
 					std::cerr<<"Unsuccess!\n";
 					stats.fails+=1;
+                    
         }
 
         delete pd;

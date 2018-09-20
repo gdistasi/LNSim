@@ -18,6 +18,7 @@
 
 
 class PaymentChannel {
+    
 public:
 	PaymentChannel(PaymentChannelEndPoint * A, PaymentChannelEndPoint * B, ln_units resFundsA, ln_units resFundsB);
 
@@ -27,9 +28,9 @@ public:
 		return residualFundsA;
 	}
 
-	void setResidualFundsA(ln_units residualFundsA) {
+	/*void setResidualFundsA(ln_units residualFundsA) {
 		this->residualFundsA = residualFundsA;
-	}
+	}*/
 
 	long getResidualFundsB() const {
 		return residualFundsB;
@@ -37,9 +38,10 @@ public:
 
 	ln_units resFunds(int id);
 
+    /*
 	void setResidualFundsB(ln_units residualFundsB) {
 		this->residualFundsB = residualFundsB;
-	}
+	}*/
 
 	void setFeeCalculator(FeeCalculator * fc){ this->feeCalc=fc;}
 
@@ -51,7 +53,14 @@ public:
 	void PayB(ln_units P);
 
 	void dump();
+    
+    double getTbfu();
 
+    
+    //Calculate the new fees according to the most recent channel state
+    void updateFees(double time);
+    
+    void setTbfu(double tbfu);
 
 	virtual bool doesFeeDependOnAmount(){ return false;}
 	virtual void calcLinearizedFee(double paym_amount, double & sending, double  & receiving, bool reverse=false) const{};
@@ -65,15 +74,30 @@ public:
 		return feeCalc;
 	}
 
+	double getLastTimeFeeUpdate();
+	
 protected:
+    
+    // residual funds of the two channel endpoints
 	ln_units residualFundsA,residualFundsB;
-	PaymentChannelEndPoint * A,*B;
+        
+    // residual Funds used for the announcement on the network
+    ln_units residualFundsAForFeeCalc,residualFundsBForFeeCalc;
+	
+    
+    PaymentChannelEndPoint * A,*B;
 	FeeCalculator * feeCalc;
-
+    
+    double lastTimeFeeUpdate;
+    
+    //time between fee recalculation
+    double tbfu;
+    
 };
 
-class PaymentChannelFixedFee: public PaymentChannel {
 
+
+class PaymentChannelFixedFee: public PaymentChannel {
 
 
 public:

@@ -18,10 +18,35 @@ PaymentChannel::PaymentChannel(PaymentChannelEndPoint * A,
 
 	this->A=A;
 	this->B=B;
-	this->residualFundsA=resFundsA;
+	
+    this->residualFundsA=resFundsA;
 	this->residualFundsB=resFundsB;
+    
+    updateFees(0);
+    
 	this->feeCalc=0;
 
+    this->tbfu=0;
+    
+}
+
+double PaymentChannel::getTbfu(){
+ return tbfu;   
+}
+
+void PaymentChannel::setTbfu(double tbfu){
+        this->tbfu=tbfu;
+}
+
+void PaymentChannel::updateFees(double time){
+    this->residualFundsAForFeeCalc = this->residualFundsA;
+	this->residualFundsBForFeeCalc = this->residualFundsB;
+    this->lastTimeFeeUpdate = time;
+}
+
+
+double PaymentChannel::getLastTimeFeeUpdate(){
+    return lastTimeFeeUpdate;
 }
 
 void PaymentChannel::PayA(ln_units P) {
@@ -129,16 +154,16 @@ void PaymentChannel::dump(){
 
 std::vector<long> PaymentChannel::getPoints(bool reverse){
 	if (!reverse)
-		return feeCalc->getPoints(residualFundsA,residualFundsB);
+		return feeCalc->getPoints(residualFundsAForFeeCalc,residualFundsBForFeeCalc);
 	else
-		return feeCalc->getPoints(residualFundsB,residualFundsA);
+		return feeCalc->getPoints(residualFundsBForFeeCalc,residualFundsAForFeeCalc);
 }
 
 std::vector<long> PaymentChannel::getSlopes(bool reverse){
 	if (!reverse ) {
-		return feeCalc->getSlopes(residualFundsA,residualFundsB);
+		return feeCalc->getSlopes(residualFundsAForFeeCalc,residualFundsBForFeeCalc);
 	} else {
-		return feeCalc->getSlopes(residualFundsB,residualFundsA);
+		return feeCalc->getSlopes(residualFundsBForFeeCalc,residualFundsAForFeeCalc);
 	}
 
 }
