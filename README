@@ -4,7 +4,7 @@ LNSIM (Lightning Network SIMulator)
 In the following you can find the documentation to run simulations on the LN (Lightning Network) simulator.
 If you use this software please consider citing [1].
 
-
+Compilation: make
 
 Usage: LNSim --numNodes X --numSources X --numDestinations X --connectionProbability X ...  
 
