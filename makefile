@@ -1,7 +1,7 @@
 
 all: LNSimulator
 
-GPP = g++-4.9
+GPP = g++
 
 CPPOPTS = -std=c++11 
 #-pg --no-pie
