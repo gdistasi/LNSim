@@ -68,7 +68,11 @@ void checkPayment(std::vector<std::vector<ln_units>> flows, ln_units pay, ln_uni
 }
 
 
+void printHelp(){
 
+	std::cout << "Please refer to the README file included in the distribution for usage help." << "\n";
+
+}
 
 int main(int argc, char * * argv){
 
@@ -77,7 +81,7 @@ int main(int argc, char * * argv){
 	double variancePayments=500000;
 	double intervalPayments=1;
 	double totalTime=std::numeric_limits<double>::max();
-	int numNodes=2;
+	int numNodes=0;
 	int numSources=1;
 	int numDestinations=1;
 	double connectionProbability=0.1;
@@ -134,6 +138,7 @@ int main(int argc, char * * argv){
 	    {
 	      static struct option long_options[] =
 	        {
+ 	          {"help",     no_argument,       0, 'h'},
 	          {"meanSizePayments",     required_argument,       0, 's'},
 	          {"variancePayments",  required_argument,       0, 'v'},
 	          {"intervalPayments",  required_argument, 0, 'i'},
@@ -153,8 +158,8 @@ int main(int argc, char * * argv){
 			  {"networkFile", required_argument, 0, 'N'},
 			  {"paymentsFile", required_argument, 0, 'Q'},
 			  {"baseFee", required_argument, 0, 'B'},
-			  {"feerateLow", required_argument, 0, 'l'},
-			  {"feerateHigh", required_argument, 0, 'h'},
+			  {"feerateLow", required_argument, 0, '1'},
+			  {"feerateHigh", required_argument, 0, '2'},
 			  {"heuristicOptimization", required_argument, 0, 'O'},
 			  {"logFile", required_argument, 0, 'L'},
 			  {"makePaymentsFile", required_argument, 0, 'a'},
@@ -167,7 +172,7 @@ int main(int argc, char * * argv){
 	      /* getopt_long stores the option index here. */
 	      int option_index = 0;
 
-	      int c = getopt_long (argc, argv, "s:v:i:t:n:p:m:M:r:f:P:F:",
+	      int c = getopt_long (argc, argv, "s:v:i:t:n:p:m:M:r:f:P:F:h",
 	                       long_options, &option_index);
 
 	      /* Detect the end of the options. */
@@ -232,10 +237,10 @@ int main(int argc, char * * argv){
 	        	variancePayments=atof(optarg);
 	        	break;
 
-	        case 'l':
+	        case '1':
 	 	        	feerate_low=atoi(optarg);
 	 	        	break;
-	        case 'h':
+	        case '2':
 	 	        	feerate_high=atoi(optarg);
 	 	        	break;
 	        case 'i':
@@ -316,15 +321,28 @@ int main(int argc, char * * argv){
                 }
                 break;
 
+
 	        case '?':
 	          /* getopt_long already printed an error message. */
 	        	exit(1);
 	          break;
 
+	        case 'h':
+	        	printHelp();
+	        	exit(0);
+
 	        default:
 	          abort ();
 	        }
 	    }
+
+
+	if (numNodes == 0 && networkFile == ""){
+		std::cerr << "No topology specified.\n";
+		printHelp();
+		exit(1);
+	}
+
 
 
 
