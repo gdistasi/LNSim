@@ -70,7 +70,7 @@ void checkPayment(std::vector<std::vector<ln_units>> flows, ln_units pay, ln_uni
 
 void printHelp(){
 
-	std::cout << "Please refer to the README file included in the distribution for usage help." << "\n";
+	std::cout << "Please refer to the README file included in the distribution for help on how to use this tool." << "\n";
 
 }
 
@@ -219,8 +219,8 @@ int main(int argc, char * * argv){
 	    	  	    break;
 
 	        case 'L':
-	       	    	  	    logFile=string(optarg);
-	       	    	  	    break;
+                    logFile=string(optarg);
+	       	    	break;
 
 	        case 'R':
    	    	  	    numPaths=atoi(optarg);

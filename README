@@ -53,7 +53,7 @@ Fee specification:
     feerateLow is the fee (expressed as millisatoshis per satoshi sent) for the part of the payment that helps balancing the channel
     feerateHigh is the fee (expressed as millisatoshis per satoshi sent) for the part of the payment that increase the imbalance of the channel
     
-    If feerateLow==feewateHigh the applied fee is simply proportional.
+    If feerateLow==feewateHigh the applied fee is simply proportional (plus the base fee)
     
     
 Routing algorithm:
