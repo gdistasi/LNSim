@@ -69,10 +69,18 @@ public:
 	std::vector<long> getPoints(bool reverse=false);
 	std::vector<long> getSlopes(bool reverse=false);
 	long getBaseFee(bool reverse=false);
+    
+    std::vector<long> getPointsAn(bool reverse=false);
+	std::vector<long> getSlopesAn(bool reverse=false);
+	long getBaseFeeAn(bool reverse=false);
+    
+    
 
 	const FeeCalculator* getFeeCalc() const {
 		return feeCalc;
 	}
+	
+	void announceFees();
 
 	double getLastTimeFeeUpdate();
 	
@@ -84,6 +92,9 @@ protected:
     // residual Funds used for the announcement on the network
     ln_units residualFundsAForFeeCalc,residualFundsBForFeeCalc;
 	
+    
+    long baseFee;
+    millisatoshis anLowFee,anHighFee;
     
     PaymentChannelEndPoint * A,*B;
 	FeeCalculator * feeCalc;
@@ -156,6 +167,7 @@ public:
 	}
 
 	double getBaseFeeA(){ return baseFeeA; }
+	
 
 
 	double getBaseFeeB(){ return baseFeeB; }

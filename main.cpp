@@ -348,7 +348,7 @@ int main(int argc, char * * argv){
 
 	LightningNetwork * net=0;
 
-	std::cerr << "All values are expressed in millisatoshis when the unit is not specified.\n";
+	std::cerr << "All values are expressed in millisatoshis when the unit of measure is not specified.\n";
 
 	if (networkFile!=""){
 		std::cerr << "Reading network from file...\n";

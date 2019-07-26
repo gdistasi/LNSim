@@ -30,6 +30,23 @@ PaymentChannel::PaymentChannel(PaymentChannelEndPoint * A,
     
 }
 
+void announceFees(){
+          millisatoshis anBaseFee,anLowFee,anHighFee;
+        
+          anBaseFee=feeCalc->getBaseFee(residualFundsA,residualFundsB);
+          anLowFee=feeCalc->getSlopes()[0];
+          anHighFee=feeCalc->getSlopes()[1];
+          
+          //TODO
+          //lastTimeFeeUpdate = 
+          
+          
+          //make sure the first slope starts at zero
+          assert(feeCalc->getPoints()[0]==0);
+          
+}   
+
+
 double PaymentChannel::getTbfu(){
  return tbfu;   
 }
@@ -167,6 +184,14 @@ std::vector<long> PaymentChannel::getSlopes(bool reverse){
 	}
 
 }
+
+    std::vector<long> getPointsAn(bool reverse=false);
+	std::vector<long> getSlopesAn(bool reverse=false);
+    
+	long PaymentChannel::getBaseFeeAn(bool reverse=false){
+        
+        
+    }
 
 long PaymentChannel::getBaseFee(bool reverse){
 	return feeCalc->getBaseFee(residualFundsA, residualFundsB);
