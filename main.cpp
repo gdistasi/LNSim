@@ -86,7 +86,7 @@ int main(int argc, char * * argv){
 	int numDestinations=1;
 	double connectionProbability=0.1;
     
-    // Interval between fees' recalculation.
+    // Interval between fees' announcements.
     double tbfu=0;
 
 	ln_units minFund=0.01 * MILLISATOSHIS_IN_BTC;
@@ -166,7 +166,6 @@ int main(int argc, char * * argv){
 			  {"makeNetworkFile", required_argument, 0, 'A'},
   			  {"tbfu", required_argument, 0, 'F'},
 			  {"seed",   required_argument, 0, 'S'},
-
 	          {0, 0, 0, 0}
 	        };
 	      /* getopt_long stores the option index here. */
@@ -519,16 +518,16 @@ int main(int argc, char * * argv){
                         /* add directional channel in one direction ... */
                         pd->AddPaymentChannel(ch->getEndPointA()->getId(), ch->getEndPointB()->getId(),
                                     ch->getResidualFundsA(),	ch->getResidualFundsB(),
-        							ch->getBaseFee(),
-        							ch->getPoints(),
-        							ch->getSlopes());
+        							ch->getBaseFeeAn(),
+        							ch->getPointsAn(),
+        							ch->getSlopesAn());
 
                         /* ... and the other */
                         pd->AddPaymentChannel(ch->getEndPointB()->getId(), ch->getEndPointA()->getId(),
                                     ch->getResidualFundsB(),ch->getResidualFundsA(),
-                                    ch->getBaseFee(true),
-        							ch->getPoints(true),
-        							ch->getSlopes(true));
+                                    ch->getBaseFeeAn(true),
+        							ch->getPointsAn(true),
+        							ch->getSlopesAn(true));
         }
 
 

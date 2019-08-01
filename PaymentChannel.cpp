@@ -30,19 +30,18 @@ PaymentChannel::PaymentChannel(PaymentChannelEndPoint * A,
     
 }
 
-void announceFees(){
-          millisatoshis anBaseFee,anLowFee,anHighFee;
-        
+
+// update the fees that are used for routing (it is like such fees were announced on the network).
+void PaymentChannel::announceFees(){
+       
           anBaseFee=feeCalc->getBaseFee(residualFundsA,residualFundsB);
-          anLowFee=feeCalc->getSlopes()[0];
-          anHighFee=feeCalc->getSlopes()[1];
+          anBaseFeeReverse=feeCalc->getBaseFee(residualFundsB,residualFundsA);
           
-          //TODO
-          //lastTimeFeeUpdate = 
+          slopesAn=feeCalc->getSlopes(residualFundsA,residualFundsB);
+          slopesAnReverse=feeCalc->getSlopes(residualFundsB,residualFundsA);
           
-          
-          //make sure the first slope starts at zero
-          assert(feeCalc->getPoints()[0]==0);
+          pointsAn=feeCalc->getPoints(residualFundsA,residualFundsB);
+          pointsAnReverse=feeCalc->getPoints(residualFundsB,residualFundsA);
           
 }   
 
@@ -56,8 +55,7 @@ void PaymentChannel::setTbfu(double tbfu){
 }
 
 void PaymentChannel::updateFees(double time){
-    this->residualFundsAForFeeCalc = this->residualFundsA;
-	this->residualFundsBForFeeCalc = this->residualFundsB;
+    announceFees();
     this->lastTimeFeeUpdate = time;
 }
 
@@ -185,13 +183,21 @@ std::vector<long> PaymentChannel::getSlopes(bool reverse){
 
 }
 
-    std::vector<long> getPointsAn(bool reverse=false);
-	std::vector<long> getSlopesAn(bool reverse=false);
-    
-	long PaymentChannel::getBaseFeeAn(bool reverse=false){
-        
-        
+    const std::vector<long> & PaymentChannel::getPointsAn(bool reverse){
+           return reverse ? pointsAnReverse: pointsAn; 
     }
+    
+
+	const std::vector<long> & PaymentChannel::getSlopesAn(bool reverse){
+           return reverse ? slopesAnReverse: slopesAn; 
+    }
+    
+	const long PaymentChannel::getBaseFeeAn(bool reverse){
+        return reverse ? anBaseFeeReverse: anBaseFee;
+    }
+    
+    
+    
 
 long PaymentChannel::getBaseFee(bool reverse){
 	return feeCalc->getBaseFee(residualFundsA, residualFundsB);

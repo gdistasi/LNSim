@@ -70,9 +70,11 @@ public:
 	std::vector<long> getSlopes(bool reverse=false);
 	long getBaseFee(bool reverse=false);
     
-    std::vector<long> getPointsAn(bool reverse=false);
-	std::vector<long> getSlopesAn(bool reverse=false);
-	long getBaseFeeAn(bool reverse=false);
+    const std::vector<long> & getPointsAn(bool reverse=false);
+	const std::vector<long> & getSlopesAn(bool reverse=false);
+	const long getBaseFeeAn(bool reverse=false);
+    
+    
     
     
 
@@ -93,8 +95,14 @@ protected:
     ln_units residualFundsAForFeeCalc,residualFundsBForFeeCalc;
 	
     
-    long baseFee;
-    millisatoshis anLowFee,anHighFee;
+    long anBaseFee;
+    long anBaseFeeReverse;
+    std::vector<long> pointsAn,slopesAn;
+    std::vector<long> pointsAnReverse,slopesAnReverse;
+    
+    
+    //numb
+    long pointOfChange;
     
     PaymentChannelEndPoint * A,*B;
 	FeeCalculator * feeCalc;
