@@ -456,11 +456,16 @@ int main(int argc, char * * argv){
             
             if (t>0)
                 ch->setTbfu(t);
+
+
        }
 
     }
     
-                 
+    for ( PaymentChannel * ch: net->getChannels()){
+    	ch->updateFees(0);
+    }
+
 	do {
 
 		net->checkResidualFunds();
@@ -475,16 +480,17 @@ int main(int argc, char * * argv){
 
 		std::cerr << "Getting next payment info...";
 		paymGen->getNext(amount,time,src,dst);
+		std::cerr << "Processing next payment - amount: " << ((double)amount)/MILLISATOSHIS_IN_BTC << "btc time: " << time << "s Src: " << src << " Dst: " << dst << "\n";
 
         
         for ( PaymentChannel * ch: net->getChannels()){
                 if (time - ch->getLastTimeFeeUpdate() > ch->getTbfu()){
+                		std::cerr << "Announcing fees for channel between " << ch->getEndPointA()->getId() << " " << ch->getEndPointB()->getId() << "\n";
                         ch->updateFees(time);
                 }
         }
         
 
-		std::cerr << "Processing next payment - amount: " << ((double)amount)/MILLISATOSHIS_IN_BTC << "btc time: " << time << "s Src: " << src << " Dst: " << dst << "\n";
 
 		if (!net->hasEnoughFunds(amount,src,payMethod)){
 			std::cerr << "Source has not enough funds\n";

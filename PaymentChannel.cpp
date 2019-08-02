@@ -22,7 +22,7 @@ PaymentChannel::PaymentChannel(PaymentChannelEndPoint * A,
     this->residualFundsA=resFundsA;
 	this->residualFundsB=resFundsB;
     
-    updateFees(0);
+    //updateFees(0);
     
 	this->feeCalc=0;
 
