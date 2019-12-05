@@ -79,17 +79,17 @@ void PaymentChannel::PayA(ln_units P) {
 	std::cout << "New balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
 #endif
 
-    assert(this->residualFundsB>=0);
-	assert(this->residualFundsA>=0);
+    //assert(this->residualFundsB>=0);
+    //assert(this->residualFundsA>=0);
     
     
     if (this->residualFundsA<0){
-        std::cerr << " A " << this->residualFundsA << " B " << this->residualFundsB << " pay " << P << " \n";
+        std::cerr << " ERROR: A " << this->residualFundsA << " B " << this->residualFundsB << " pay " << P << " \n";
         residualFundsA=0;
     }
     
     if (this->residualFundsB<0){
-        std::cerr << " A " << this->residualFundsA << " B " << this->residualFundsB << " pay " << P << " \n";
+        std::cerr << " ERROR: A " << this->residualFundsA << " B " << this->residualFundsB << " pay " << P << " \n";
         residualFundsB=0;
     }
     
@@ -116,16 +116,18 @@ void PaymentChannel::PayB(ln_units P) {
 	std::cout << "New balance A: " << this->residualFundsA << " B " << this->residualFundsB << "\n";
 #endif
 
-	assert(this->residualFundsB>=0);
-	assert(this->residualFundsA>=0);
+	//assert(this->residualFundsB>=0);
+	//assert(this->residualFundsA>=0);
     
       
     if (this->residualFundsA<0){
-        std::cerr << " A " << this->residualFundsA << " B " << this->residualFundsB << " pay " << P << " \n";
+	std::cerr << "ERROR: residual funds  A: " << this->residualFundsA << "\n";    
+	    std::cerr << " A " << this->residualFundsA << " B " << this->residualFundsB << " pay " << P << " \n";
         residualFundsA=0;
     }
     
     if (this->residualFundsB<0){
+	std::cerr << "ERROR: residual funds  B: " << this->residualFundsB << "\n";    
         std::cerr << " A " << this->residualFundsA << " B " << this->residualFundsB << " pay " << P << " \n";
         residualFundsB=0;
     }

@@ -3,7 +3,7 @@ all: LNSimulator
 
 GPP = g++
 
-CPPOPTS = -std=c++11 
+CPPOPTS = -std=c++11  -DDEBUG
 #-pg --no-pie
 
 OBJS = main.o PaymentRequest.o NetworkGenerator.o PaymentsGenerator.o PaymentChannel.o FeeCalculator.o PaymentChannelEndPoint.o Gateway.o LightningNetwork.o PaymentDeployer.o utils.o
