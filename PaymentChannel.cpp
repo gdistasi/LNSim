@@ -13,6 +13,9 @@
 #include <iomanip>
 #include "defs.h"
 
+#include <string>
+#include <sstream>
+
 PaymentChannel::PaymentChannel(PaymentChannelEndPoint * A,
 		PaymentChannelEndPoint * B, ln_units resFundsA, ln_units resFundsB) {
 
@@ -62,6 +65,12 @@ void PaymentChannel::updateFees(double time){
 
 double PaymentChannel::getLastTimeFeeUpdate(){
     return lastTimeFeeUpdate;
+}
+
+std::string PaymentChannel::toString() const {
+    stringstream res;
+    res  <<  "A: " << A->getId() << " B: " << B->getId() << " ";
+    return res.str();
 }
 
 void PaymentChannel::PayA(ln_units P) {

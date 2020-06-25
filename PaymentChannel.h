@@ -14,7 +14,7 @@
 #include "PaymentChannelEndPoint.h"
 #include "FeeCalculator.h"
 #include "defs.h"
-
+#include <string>
 
 
 class PaymentChannel {
@@ -27,7 +27,6 @@ public:
 	long getResidualFundsA() const {
 		return residualFundsA;
 	}
-
 	/*void setResidualFundsA(ln_units residualFundsA) {
 		this->residualFundsA = residualFundsA;
 	}*/
@@ -37,6 +36,8 @@ public:
 	}
 
 	ln_units resFunds(int id);
+        
+
 
     /*
 	void setResidualFundsB(ln_units residualFundsB) {
@@ -55,6 +56,8 @@ public:
 	void dump();
     
     double getTbfu();
+    
+   std::string toString() const;
 
     
     //Calculate the new fees according to the most recent channel state
@@ -70,7 +73,7 @@ public:
 	std::vector<long> getSlopes(bool reverse=false);
 	long getBaseFee(bool reverse=false);
     
-    const std::vector<long> & getPointsAn(bool reverse=false);
+        const std::vector<long> & getPointsAn(bool reverse=false);
 	const std::vector<long> & getSlopesAn(bool reverse=false);
 	const long getBaseFeeAn(bool reverse=false);
     

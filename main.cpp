@@ -86,8 +86,8 @@ int main(int argc, char * * argv){
 	int numDestinations=1;
 	double connectionProbability=0.1;
     
-    // Interval between fees' announcements.
-    double tbfu=0;
+        // Interval between fees' announcements.
+        double tbfu=0;
 
 	ln_units minFund=0.01 * MILLISATOSHIS_IN_BTC;
 	ln_units maxFund=0.167 * MILLISATOSHIS_IN_BTC;
@@ -454,9 +454,10 @@ int main(int argc, char * * argv){
             
             t=distribution(generator);
             
-            if (t>0)
+            if (t>0){
                 ch->setTbfu(t);
-
+               	std::cerr << "Set time between updates for channel " << ch->toString() << " is " << t << "\n";
+            }
 
        }
 

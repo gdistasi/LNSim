@@ -42,7 +42,7 @@ ylbl = outputf{1,:};
 
 
 markers = ["*" , "+" , "<" , ">" , "^" , "x" , "o" , "p" , "pentagram" , "s" , "square" , "v" ,   "diamond" , "h" , "hexagram" ];
-colors = [ "b", "c", "r", "g", "m", "y", "r" ];
+colors = [ "b", "c", "r", "g", "m", "y", "r", "k", "w", "r" ];
 
 
 #samples=0
